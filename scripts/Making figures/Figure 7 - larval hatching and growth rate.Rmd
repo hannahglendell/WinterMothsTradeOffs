@@ -48,6 +48,9 @@ hatching_plot <- ggplot(caterpillar_data, aes(x = factor(hatched, labels = c("Un
   #scale_colour_manual(values = temp_cols) +
   labs(x = "", y = expression(Egg~area~(mm^2)), title = "A) Hatching success", colour = "Allocation temperature") +
   theme_bw() +
+  scale_y_continuous(
+    breaks = seq(0.18, 0.30, by = 0.02),
+    limits = c(0.18, 0.30)) +
     theme(
     text = element_text(size = 18),            # increases all text
     axis.title = element_text(size = 20),      # axis titles bigger

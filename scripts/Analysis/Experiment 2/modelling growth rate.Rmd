@@ -70,18 +70,20 @@ long_data <- long_data %>%
     !is.na(weight),
     !is.na(days_post_hatch),
     !is.na(eggID)
-  ) #%>%
-  #mutate("log_weight" = log(weight))
+  ) %>%
+  mutate("log_weight" = log(weight))
 
+#USING RAW WEIGHTS
 
 #group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
 slopes <- long_data %>%
   group_by(eggID) %>%
   summarise(
-    slope = coef(lm(weight ~ days_post_hatch))[2]
-  )
+    slope = coef(lm(weight ~ days_post_hatch))[2])
+```
 
 
+```{r}
 
 #random intercepts and random slopes for each egg
 #model <- lmer(weight ~  days_post_hatch + (days_post_hatch | eggID), data = long_data)
@@ -100,14 +102,109 @@ caterpillar_data <- caterpillar_data %>%
   left_join(slopes, by = "eggID")
 
 #plot the relationship between growth rate and egg size
-ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
-  geom_point(size = 3) +
-labs( x = "egg size", y = "growth rate (mg/day)")
+growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
+  geom_point(size = 5) +
+labs( x = expression(Egg~area~(mm^2)), y = "Growth rate (mg/day)", title = "B) Larval growth rate") +
+  theme_bw() +
+  scale_x_continuous(
+    breaks = seq(0.18, 0.26, by = 0.02),
+    limits = c(0.18, 0.26)) +
+    theme(
+    text = element_text(size = 18),            # increases all text
+    axis.title = element_text(size = 20),      # axis titles bigger
+    axis.text = element_text(size = 18),       # axis tick labels bigger
+    legend.text = element_text(size = 18),     # legend text bigger
+    legend.title = element_text(size = 20)
+    )
+
+growth_rate
+
 
 #now make a model of growth rate and size
 model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpillar_data)
 summary(model)
 AIC(model)
+
+plot(model)
+qqnorm(resid(model))
+qqline(resid(model))
+
+library(DHARMa)
+sim_res <- simulateResiduals(model)
+plot(sim_res)
+
+
+hist(long_data$weight)
+
+#AIC with using log weights in -236
+# size is significant but pupal treatment isn't
+
+#AIC using raw weights is 288
+#neither size or pupal treatment is significant
+```
+
+
+
+
+```{r}
+#USING LOG OF WEIGHT
+
+#group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
+
+#Removing these two data points makes the whole thing non-significant
+#long_data <- long_data %>%
+  #filter(eggID != "AM178.04") %>%
+  #filter(eggID != "AA144.02")
+
+
+slopes <- long_data %>%
+  group_by(eggID) %>%
+  summarise(
+    slope = coef(lm(log_weight ~ days_post_hatch))[2]
+  )
+
+#now i want to join this back onto the caterpillar_data spreadsheet
+caterpillar_data <- caterpillar_data %>%
+  left_join(slopes, by = "eggID")
+
+#plot the relationship between growth rate and egg size
+ growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
+  geom_point(size = 3) +
+labs( x = expression(Egg~area~(mm^2)), y = expression(relative~growth~rate~(mg %.% mg^-1 %.% day^-1)), title = "B) Growth rate") + 
+  theme_bw() +
+  scale_x_continuous(
+    breaks = seq(0.18, 0.26, by = 0.02),
+    limits = c(0.18, 0.26)) +
+    theme(
+    text = element_text(size = 18),            # increases all text
+    axis.title = element_text(size = 20),      # axis titles bigger
+    axis.text = element_text(size = 18),       # axis tick labels bigger
+    legend.text = element_text(size = 18),     # legend text bigger
+    legend.title = element_text(size = 20)
+    )
+ 
+ growth_rate
+
+
+
+
+
+#now make a model of growth rate and size
+model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpillar_data)
+summary(model)
+
+#looking at all these model diagnostics, it doesn't seem like logging the changes the model fit very much
+plot(model)
+qqnorm(resid(model))
+qqline(resid(model))
+
+sim_res <- simulateResiduals(model)
+plot(sim_res)
+
+plot(model)
+
+
+hist(long_data$log_weight)
 
 ```
 
@@ -131,5 +228,43 @@ model <- lmer(weight ~ days_post_hatch * size_01 + days_post_hatch * pupal_treat
 summary(model)
 
 plot(model)
+
+
+slopes <- long_data %>%
+  group_by(eggID) %>%
+  summarise({
+    m1 <- lm(weight ~ days_post_hatch)
+    m2 <- lm(log(weight) ~ days_post_hatch)
+    
+    pred1 <- predict(m1)
+    pred2 <- exp(predict(m2))  # back-transform
+    
+    rmse_raw <- sqrt(mean((weight - pred1)^2))
+    rmse_log <- sqrt(mean((weight - pred2)^2))
+    
+    tibble(
+      rmse_raw = rmse_raw,
+      rmse_log = rmse_log
+    )
+  })
+
+residuals_df <- long_data %>%
+  group_by(eggID) %>%
+  mutate(
+    resid_raw = resid(lm(weight ~ days_post_hatch)),
+    fitted_raw = fitted(lm(weight ~ days_post_hatch)),
+    
+    resid_log = resid(lm(log(weight) ~ days_post_hatch)),
+    fitted_log = fitted(lm(log(weight) ~ days_post_hatch))
+  )
+
+
+ggplot(residuals_df, aes(fitted_raw, resid_raw)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") 
+
+ggplot(residuals_df, aes(fitted_log, resid_log)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed")
 ```
 
