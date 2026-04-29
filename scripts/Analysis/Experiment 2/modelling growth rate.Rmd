@@ -152,8 +152,8 @@ hist(long_data$weight)
 #group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
 
 #Removing these two data points makes the whole thing non-significant
-#long_data <- long_data %>%
-  #filter(eggID != "AM178.04") %>%
+#caterpillar_data <- caterpillar_data %>%
+ #filter(eggID != "AM178.04") %>%
   #filter(eggID != "AA144.02")
 
 
