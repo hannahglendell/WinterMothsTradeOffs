@@ -24,7 +24,10 @@ results$grandmotherID <- as.factor(results$grandmotherID)
 #how many eggs were counted in total
 sum(results$clutch_size) 
 
-#mean and SD of clutch size, including clutches of 0 eggs
+#mean and SD of clutch size, excluding clutches of 0 eggs
+results <- results %>%
+  filter(clutch_size != 0)
+
 mean(results$clutch_size)
 sd(results$clutch_size)
 

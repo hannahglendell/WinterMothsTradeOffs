@@ -23,7 +23,9 @@ egg_counts$green_eggs  <- as.numeric(egg_counts$green_eggs)
 egg_counts$orange_eggs <- as.numeric(egg_counts$orange_eggs)
 
 egg_counts <- egg_counts %>%
-  mutate(clutch_size = green_eggs + orange_eggs)
+  mutate(clutch_size = green_eggs + orange_eggs) %>%
+  filter(!startsWith(adultID, "F")) %>% #remove sienna's females
+  filter(sex == "F")
 
 #################################################################################################################################
 #read in the wild moths spreadsheet
@@ -173,7 +175,7 @@ ambient_data_feb2025$temperature <- as.numeric(ambient_data_feb2025$temperature)
 
 write.csv(ambient_data_feb2025, file = here("data", "clean data", "ambient temperatures.csv"), row.names = FALSE)
 ```
-CATERPILLAR HATCH DATE DATA
+CATERPILLAR HATCH DATE
 ```{r}
 eggs_spreadsheet <- read.csv(here("data", "raw data", "eggs spreadsheet(Sheet1).csv"))
 
