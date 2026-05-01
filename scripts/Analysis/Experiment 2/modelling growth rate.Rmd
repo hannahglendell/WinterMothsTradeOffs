@@ -36,7 +36,7 @@ caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
 #remove rows where hatched is NA, and where there are not at least two weights
 caterpillar_data <- caterpillar_data %>%
   filter(!is.na(hatched)) %>%
-  filter(!is.na(weight_2))
+  filter(!is.na(weight3))
 
 ```
 
@@ -79,7 +79,7 @@ long_data <- long_data %>%
 slopes <- long_data %>%
   group_by(eggID) %>%
   summarise(
-    slope = coef(lm(weight ~ days_post_hatch))[2])
+    slope = coef(lm(log_weight ~ days_post_hatch))[2])
 ```
 
 
@@ -152,9 +152,9 @@ hist(long_data$weight)
 #group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
 
 #Removing these two data points makes the whole thing non-significant
-#caterpillar_data <- caterpillar_data %>%
- #filter(eggID != "AM178.04") %>%
-  #filter(eggID != "AA144.02")
+caterpillar_data <- caterpillar_data %>%
+ filter(eggID != "AM178.04") %>%
+  filter(eggID != "AA144.02")
 
 
 slopes <- long_data %>%
