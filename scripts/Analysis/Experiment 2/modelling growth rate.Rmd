@@ -104,7 +104,7 @@ caterpillar_data <- caterpillar_data %>%
 #plot the relationship between growth rate and egg size
 growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
   geom_point(size = 5) +
-labs( x = expression(Egg~area~(mm^2)), y = "Growth rate (mg/day)", title = "B) Larval growth rate") +
+  labs( x = expression(Egg~area~(mm^2)), y = expression(Relative~growth~rate~(mg %.% mg^-1 %.% day^-1)), title = "B) Larval growth rate") +
   theme_bw() +
   scale_x_continuous(
     breaks = seq(0.18, 0.26, by = 0.02),
