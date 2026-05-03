@@ -202,18 +202,34 @@ caterpillar_data <- caterpillar_data %>%
   select(-second_letter)
 
 #make at status column
+#caterpillar_data <- caterpillar_data %>%
+ # mutate(status = case_when(
+#   weighday_1 == "lost" ~ "lost",
+ #   str_detect(weighday_1, "dead") ~ "dead",
+
+ #  hatch_date == "empty" ~ "empty",
+ #  hatch_date == "crushed" ~ "crushed",
+  #  is.na(hatch_date) ~ "unhatched",
+
+  #  !is.na(mdy(weighday_1)) ~ "hatched",
+
+ #  TRUE ~ NA_character_
+ # ))
+
 caterpillar_data <- caterpillar_data %>%
   mutate(status = case_when(
-   weighday_1 == "lost" ~ "lost",
-    str_detect(weighday_1, "dead") ~ "dead",
+    
+    if_any(starts_with("weighday_"), ~ str_detect(.x, "lost")) ~ "lost",
+    
+    if_any(starts_with("weighday_"), ~ str_detect(.x, "dead")) ~ "dead",
 
-   hatch_date == "empty" ~ "empty",
-   hatch_date == "crushed" ~ "crushed",
+    hatch_date == "empty" ~ "empty",
+    hatch_date == "crushed" ~ "crushed",
     is.na(hatch_date) ~ "unhatched",
 
     !is.na(mdy(weighday_1)) ~ "hatched",
 
-   TRUE ~ NA_character_
+    TRUE ~ NA_character_
   ))
 
 #make a numerical column about whether or not it hatched

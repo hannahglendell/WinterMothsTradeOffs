@@ -35,8 +35,10 @@ caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
 
 #remove rows where hatched is NA, and where there are not at least two weights
 caterpillar_data <- caterpillar_data %>%
-  filter(!is.na(hatched)) %>%
-  filter(!is.na(weight3))
+  filter(!is.na(hatched)) %>% # remove those that didn't hatch
+  filter(!is.na(weight3)) %>% #remove those that haven't been weighed up to at least 30 days post hatching
+  select(-weight_5) %>% # remove weight at 42 days post hatching
+  filter(status != "dead") #remove caterpillars that have died
 
 ```
 
@@ -61,6 +63,11 @@ long_data$weighday <- as.Date(long_data$weighday)
 long_data <- long_data %>%
   mutate(days_post_hatch = as.numeric(weighday - hatch_date)) %>%
   filter(!is.na("weight"))
+
+#how many caterpillars were weighed at weighday_4
+caterpillar_data %>%
+  summarise(count_weight4 = sum(!is.na(weight_4) & weight_4 != ""))
+
 ```
 
 ```{r}
@@ -72,8 +79,6 @@ long_data <- long_data %>%
     !is.na(eggID)
   ) %>%
   mutate("log_weight" = log(weight))
-
-#USING RAW WEIGHTS
 
 #group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
 slopes <- long_data %>%
@@ -97,9 +102,17 @@ slopes <- long_data %>%
 #  slope = coef(model)$eggID[, "days_post_hatch"]
 #)
 
+
+
+
 #now i want to join this back onto the caterpillar_data spreadsheet
 caterpillar_data <- caterpillar_data %>%
   left_join(slopes, by = "eggID")
+
+#mean and SD of slopes (growth rate)
+mean(caterpillar_data$slope)
+sd(caterpillar_data$slope)
+
 
 #plot the relationship between growth rate and egg size
 growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
@@ -151,9 +164,8 @@ hist(long_data$weight)
 
 #group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
 
-#Removing these two data points makes the whole thing non-significant
+#Removing this one data point makes it non-significant
 caterpillar_data <- caterpillar_data %>%
- filter(eggID != "AM178.04") %>%
   filter(eggID != "AA144.02")
 
 
