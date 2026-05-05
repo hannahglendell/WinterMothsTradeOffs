@@ -54,6 +54,22 @@ summary(raw_egg_sizes$egg_mean_1A)
 sd(raw_egg_sizes$egg_mean_1A)
 
 
+#look at the distributions of egg size
+egg_size_distribution <- ggplot(raw_egg_sizes, aes(x = area)) +
+  geom_histogram(binwidth = 0.01) +  # change this value to control bin width +
+  labs(title = "A) Egg size",
+       x = expression(Egg~area~(mm^2)),
+       y = "Count") +
+  theme_bw()+
+    theme(
+    text = element_text(size = 18),            # increases all text
+    axis.title = element_text(size = 20),      # axis titles bigger
+    axis.text = element_text(size = 18),       # axis tick labels bigger
+    legend.text = element_text(size = 18),     # legend text bigger
+    legend.title = element_text(size = 20))
+
+egg_size_distribution
+
 #looking just at ambient, warm and hot larval temperature - need to remove wild because they don't have weight, or maternal ID or clutchID
 egg_sizes_filtered <- raw_egg_sizes %>%
   filter(larval_treatment %in% c("ambient", "warm", "hot")) %>%

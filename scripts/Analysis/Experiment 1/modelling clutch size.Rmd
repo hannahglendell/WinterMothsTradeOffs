@@ -36,6 +36,34 @@ results <- results %>%
   mutate(treatment_combination = paste(larval_treatment, pupal_treatment, sep = "_"))  %>%
   mutate()
 
+#make histogram of clutch size
+clutch_size_distribution <- ggplot(results, aes(x = clutch_size)) +
+  geom_histogram(binwidth = 10) +  # change this value to control bin width +
+  labs(title = "B) clutch size",
+       x = "Clutch size (number of eggs)",
+       y = "Count") +
+  theme_bw() +
+    theme(
+    text = element_text(size = 18),            # increases all text
+    axis.title = element_text(size = 20),      # axis titles bigger
+    axis.text = element_text(size = 18),       # axis tick labels bigger
+    legend.text = element_text(size = 18),     # legend text bigger
+    legend.title = element_text(size = 20))
+
+clutch_size_distribution
+
+#join together with histogram of egg size, from a different script
+distributions <-  egg_size_distribution + clutch_size_distribution
+
+ggsave(
+  here("figures", "distributions.png"),
+  plot = distributions,
+  width = 20,
+  height = 10,
+  dpi = 300
+)
+
+
 #number of mated females in each treatment group 
 table(results$treatment_combination)
 
