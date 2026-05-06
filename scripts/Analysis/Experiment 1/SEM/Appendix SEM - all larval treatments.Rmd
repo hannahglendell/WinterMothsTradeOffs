@@ -71,6 +71,13 @@ sem_model <- psem(
   m_model,
   y_model,
   x_model)
+
+AIC(sem_model)
+#AIC = 2272
+
+summary(sem_model)
+
+rsquared(sem_model)
 ```
 
 

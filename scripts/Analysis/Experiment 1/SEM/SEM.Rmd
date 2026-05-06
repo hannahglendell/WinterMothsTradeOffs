@@ -109,6 +109,10 @@ coefs(sem_model, standardize = "scale", standardize.type = "Menard.OE")
 plot(sem_model, show = "std", digits = 2)
 
 
+AIC(sem_model)
+#AIC = 2037
+
+rsquared(sem_model)
 ```
 
 
