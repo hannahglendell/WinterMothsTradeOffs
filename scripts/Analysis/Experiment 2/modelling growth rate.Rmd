@@ -38,6 +38,7 @@ caterpillar_data <- caterpillar_data %>%
   filter(!is.na(hatched)) %>% # remove those that didn't hatch
   filter(!is.na(weight3)) %>% #remove those that haven't been weighed up to at least 30 days post hatching
   select(-weight_5) %>% # remove weight at 42 days post hatching
+  select(-weight_6) %>% 
   filter(status != "dead") #remove caterpillars that have died
 
 ```
@@ -63,6 +64,10 @@ long_data$weighday <- as.Date(long_data$weighday)
 long_data <- long_data %>%
   mutate(days_post_hatch = as.numeric(weighday - hatch_date)) %>%
   filter(!is.na("weight"))
+
+#remove this caterpillar because I made a mistake weighing it...
+caterpillar_data <- caterpillar_data %>%
+  filter(eggID != "AA297.06")
 
 #how many caterpillars were weighed at weighday_4
 caterpillar_data %>%
@@ -101,7 +106,6 @@ slopes <- long_data %>%
  # eggID = rownames(coef(model)$eggID),
 #  slope = coef(model)$eggID[, "days_post_hatch"]
 #)
-
 
 
 
