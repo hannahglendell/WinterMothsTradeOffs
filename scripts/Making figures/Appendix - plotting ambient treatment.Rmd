@@ -117,22 +117,26 @@ daily_means <- daily_means %>%
 # Ensure the treatment factor has the correct order
 plot_data_clean <- plot_data_clean %>%
   mutate(treatment = factor(treatment, 
-                            levels = c("plus2.5_mean", "plus1.5_mean", "actual_mean", "minus1.5_mean", "Ambient_mean")))
+                            levels = c("plus2.5_mean", "plus1.5_mean", "actual_mean", "minus1.5_mean", "Ambient_mean"))) %>%
+  filter(date >= as.Date("2025-01-03") & date <= as.Date("2025-12-30"))
+
 
 daily_means <- daily_means %>%
   mutate(treatment = factor(treatment, 
-                            levels = c("plus2.5_mean", "plus1.5_mean", "actual_mean", "minus1.5_mean", "Ambient_mean")))
+                            levels = c("plus2.5_mean", "plus1.5_mean", "actual_mean", "minus1.5_mean", "Ambient_mean"))) %>%
+  filter(date >= as.Date("2025-01-01") & date <= as.Date("2025-12-30"))
+
 
 # Combine plots
 plot_1 <- ggplot() +
+   # Overlay the daily mean temperature for ambient treatment (dashed, thinner)
+  geom_line(data = daily_means, 
+            aes(x = date, y = mean_temperature, color = treatment),
+            size = 1.2, alpha = 0.2) +
   # Plot the mean temperature by treatment (thicker lines)
   geom_line(data = plot_data_clean, 
             aes(x = date, y = mean_temperature, color = treatment),
-            size = 1.2) +  # increase line thickness for treatments
-  # Overlay the daily mean temperature for ambient treatment (dashed, thinner)
-  #geom_line(data = daily_means, 
-          #  aes(x = date, y = mean_temperature, color = treatment),
-          #  size = 0.6) +   # thinner line for ambient
+            size = 1.2, alpha = 0.8) +  
   scale_color_manual(
     values = c(
       "minus1.5_mean" = "#76C0CC",
@@ -177,7 +181,15 @@ plot_1
 
 ```
 ```{r}
-ggsave("temperature treatments.png", plot = plot_1, width = 10, height = 5, dpi = 300) 
+
+
+ggsave(
+  here("figures", "temperature treatments.png"),
+  plot = plot_1,
+  width = 10,
+  height = 5,
+  dpi = 300
+)
 ```
 
  
@@ -201,7 +213,7 @@ ambient_temp_resource_allocation <- ggplot() +
   # Overlay the daily mean temperature for ambient treatment
   geom_line(data = allocation_period_ambient, 
             aes(x = date, y = mean_temperature, color = treatment),
-            size = 1.8, alpha = 0.9) +
+            size = 1.8, alpha = 0.3) +
   # Vertical line for adult emergence
   geom_vline(xintercept = as.Date("2025-11-29"), linetype = "dashed", size = 1.0, alpha = 0.8) +
   annotate("text", x = as.Date("2025-11-29"), y = max(allocation_period_treatments$mean_temperature) + 0.1,
