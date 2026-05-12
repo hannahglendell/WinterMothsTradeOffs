@@ -37,8 +37,8 @@ caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
 caterpillar_data <- caterpillar_data %>%
   filter(!is.na(hatched)) %>% # remove those that didn't hatch
   filter(!is.na(weight3)) %>% #remove those that haven't been weighed up to at least 30 days post hatching
-  select(-weight_5) %>% # remove weight at 42 days post hatching
-  select(-weight_6) %>% 
+  dplyr::select(-weight_5) %>% # remove weight at 42 days post hatching
+  dplyr::select(-weight_6) %>% 
   filter(status != "dead") #remove caterpillars that have died
 
 ```

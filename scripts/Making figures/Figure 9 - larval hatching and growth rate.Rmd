@@ -162,7 +162,7 @@ growth_rate
 caterpillar_plot <-  hatching_plot + growth_rate
 
 ggsave(
-  here("figures", "caterpillar plot.png"),
+  here("figures", "figure 9 - hatching success and growth rate.png"),
   plot = caterpillar_plot,
   width = 20,
   height = 10,

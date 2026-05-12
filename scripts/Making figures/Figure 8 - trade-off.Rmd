@@ -69,9 +69,9 @@ wild_moths_trade_off
 ```{r}
 lab_moths_trade_off <- ggplot(
   results %>% filter(pupal_treatment != "wild"),
-  aes(x = clutch_size, y = egg_mean_1A, colour = larval_treatment)) +
+  aes(x = clutch_size, y = egg_mean_1A)) +
   geom_point(size = 4) +
-  scale_colour_manual(values = temp_cols) +
+  #scale_colour_manual(values = temp_cols) +
 coord_cartesian(xlim = c(0, 400), ylim = c(0.16, 0.24)) +
     labs(
       title = "A) Laboratory moths",
@@ -92,7 +92,7 @@ lab_moths_trade_off
 trade_off_plot <-  lab_moths_trade_off + wild_moths_trade_off
 
 ggsave(
-  here("figures", "trade off.png"),
+  here("figures", "figure 8 - trade off.png"),
   plot = trade_off_plot,
   width = 20,
   height = 10,

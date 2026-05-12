@@ -124,11 +124,11 @@ rsquared(sem_model)
 #save the standardised effects so I don't have to re-run the bootstrap every time
 #saveRDS(standardised_effects, file = here("data", "clean data","standardised_effects.rds"))
 
-#standardised_effects <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/standardised_effects.rds")
+standardised_effects <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/standardised_effects.rds")
 
 summary(standardised_effects)
 
-tab_model(standardised_effects)
+#tab_model(standardised_effects)
 
 ```
 
@@ -147,7 +147,7 @@ tab_model(standardised_effects)
 raw_effects <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/raw_effects.rds")
 
 summary(raw_effects)
-tab_model(standardised_effects)
+#tab_model(standardised_effects)
 
 
 

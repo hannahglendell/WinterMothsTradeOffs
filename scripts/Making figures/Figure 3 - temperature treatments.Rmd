@@ -37,16 +37,7 @@ daily_means <- ambient_temperatures %>%
 
 ```
 
-```{r}
-#now plot the daily mean temperature for ambient treatment
-ggplot(daily_means, aes(x = date, y = mean_temperature)) +
-  geom_line()
 
-#plot the raw temperatures in ambient over time
-ggplot(ambient_temperatures, aes(x = datetime, y = temperature)) +
-  geom_line()
-
-```
 ```{r}
 #now i need to calculate the daily mean temperature for the temperature treatments
 temperature_treatments <- read.csv(here("data", "raw data", "mbiols_daily_temperature_data.csv"))
@@ -182,8 +173,6 @@ plot_1
 
 ```
 ```{r}
-
-    
 ggsave(
   here("figures", "figure 3 - temperature treatments.png"),
   plot = plot_1,
@@ -194,7 +183,7 @@ ggsave(
 ```
 
  
-
+STUFF I DIDN'T END UP INCLUDING 
 ```{r}
 #AMBIENT TEMPERATURE DURING RESOURCE ALLOCATION
 # Filter for 16 May onwards, to show temperature as pupa/adult

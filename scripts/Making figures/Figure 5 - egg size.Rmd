@@ -123,7 +123,7 @@ mean_egg_size
 egg_size <- mean_egg_size + egg_size_model
 
 ggsave(
-  here("figures", "egg_size.png"),
+  here("figures", "figure 5 - egg_size.png"),
   plot = egg_size,
   width = 20,
   height = 10,

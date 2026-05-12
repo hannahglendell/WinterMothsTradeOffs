@@ -128,13 +128,13 @@ lm4_no_larval <- lmer(area ~ pupal_treatment + (1|grandmotherID/motherID) + weig
 anova(lm4_no_interaction, lm4_no_larval)
 #larval temp is significant overall
 
-confint(lm4)
+#confint(lm4)
 #confidence intervals of larval treatment effects overlap with zero
 ```
 
 ```{r}
 #pairwise comparisons
-#estimates marginal means for the pupal treatments
+estimates marginal means for the pupal treatments
 emm <- emmeans(lm4_no_interaction, ~ pupal_treatment)
 emm
 pairs(emm)
