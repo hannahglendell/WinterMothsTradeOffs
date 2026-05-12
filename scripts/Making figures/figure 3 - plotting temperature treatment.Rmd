@@ -6,7 +6,7 @@ output: html_document
 ```{r}
 library(ggplot2) 
 library(tidyverse)
-library(here)
+library(here) 
 ```
 
 
@@ -161,7 +161,7 @@ scale_x_date(
 ) +
   labs(
     x = "",
-    y = "Mean daily temperature (°C)",
+    y = "Daily mean temperature (°C)",
     title = ""
   ) +
   theme_bw() +
@@ -184,7 +184,7 @@ plot_1
 
 
 ggsave(
-  here("figures", "temperature treatments.png"),
+  here("figures", "figure 3 - temperature treatments.png"),
   plot = plot_1,
   width = 10,
   height = 5,
