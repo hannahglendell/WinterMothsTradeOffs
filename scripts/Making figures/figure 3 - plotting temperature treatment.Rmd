@@ -7,6 +7,7 @@ output: html_document
 library(ggplot2) 
 library(tidyverse)
 library(here) 
+#checking new username still works
 ```
 
 
@@ -182,7 +183,7 @@ plot_1
 ```
 ```{r}
 
-
+    
 ggsave(
   here("figures", "figure 3 - temperature treatments.png"),
   plot = plot_1,
