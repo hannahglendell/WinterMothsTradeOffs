@@ -13,6 +13,7 @@ library(purrr)
 library(broom)
 library(nlme)
 library(lme4)
+library(irr)
 ```
 
 ```{r}
@@ -142,6 +143,8 @@ model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpill
 summary(model)
 AIC(model)
 
+icc(model)
+
 plot(model)
 qqnorm(resid(model))
 qqline(resid(model))
@@ -208,6 +211,8 @@ labs( x = expression(Egg~area~(mm^2)), y = expression(relative~growth~rate~(mg %
 #now make a model of growth rate and size
 model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpillar_data)
 summary(model)
+
+
 
 #looking at all these model diagnostics, it doesn't seem like logging the changes the model fit very much
 plot(model)

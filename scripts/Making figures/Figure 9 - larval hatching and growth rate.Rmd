@@ -139,7 +139,7 @@ ggplot(long_data, aes(x = weighday, y = weight, group = id)) +
   theme_minimal()
 
 growth_rate <- ggplot(long_data, aes(x = days_post_hatch, y = log(weight), group = id, colour = pupal_treatment)) +
-  geom_line(alpha = 0.5, size = 1) +
+  geom_line(alpha = 0.5, size = 1) + 
   geom_point(size = 5) +
   scale_x_continuous(breaks = c(18, 24, 30, 36)) +
   labs(x = "Days post hatching", y = "larval mass (mg)",
