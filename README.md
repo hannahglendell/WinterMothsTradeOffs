@@ -4,9 +4,41 @@ editor_options:
     wrap: 72
 ---
 
-# MbiolProject
+# Repository structure
 
-# Raw data files 
+This repostory has four folders - data, figures, renv and scripts
+
+-   data contains the raw data and clean data. Data cleaning performed
+    in cleaning.Rmd found in scripts folder. Also contains some saved
+    outputs from the structural equation modelling
+
+-   figures - figures saved as .png
+
+-   renv - all the R packages used in this repository
+
+-   scripts - scripts for all analyses and for creating figures. First
+    run the cleaning.Rmd to clean all the data. Then there are two
+    folders
+
+    -   Analysis
+
+        -   Appendix - Ambient temperature contains code for calculating
+            the life cycle dates of wild winter moths, and code for
+            calculating the mean temperature in each treatment during
+            'resource acquisition' and 'resource allocation' periods
+
+        -   Experiment 1 - all code for experiment 1, including analysis
+            on clutch size, egg size, their trade-off, and the SEM
+            analysis
+
+        -   Experiment 2 - all code for investigating the fitness
+            effects of egg size on hatching success and larval growth
+            rate.
+
+    -   Making figures - code for making the figures saved in 'figures'
+        folder
+
+# Raw data files
 
 ## Experiment 1
 
@@ -20,7 +52,7 @@ editor_options:
 **raw egg sizes.csv**
 
 -   contains the individual measurements of the 3381 individual eggs
-    measured from 381 photographs.
+    measured from 381 photographs
 
 -   columns include:
 
@@ -69,7 +101,7 @@ editor_options:
     -   pupal_treatment - meaning resource allocation temperature
         treatment
 
-    -    emergence_date - date of adult emerging from pupa -
+    -   emergence_date - date of adult emerging from pupa -
 
     -   sex -
 
@@ -89,13 +121,13 @@ editor_options:
     -   age_at_photo - redundant column. Adult winter moths were
         photographed for a different experiment
 
-    -    uploaded - redundant column used for different experiment
+    -   uploaded - redundant column used for different experiment
 
     -   dead - used to note that the adult moth had died
 
     -   green_eggs - number of green eggs in that clutch
 
-    -    orange_eggs - number of orange eggs in that clutch
+    -   orange_eggs - number of orange eggs in that clutch
 
     -   clutch_size - total clutch size of green + orange eggs
 
@@ -148,7 +180,7 @@ editor_options:
 
 **wild raw egg sizes.csv**
 
--    contains the measurments of individual eggs measured from the
+-   contains the measurments of individual eggs measured from the
     photographs taken of the clutches of wild moths
 
 -   columns include:
@@ -181,27 +213,29 @@ editor_options:
 
 **eggs spreadsheet(Sheet1).csv**
 
--    contains the measured sizes of the 200 individual moth eggs that
+-   contains the measured sizes of the 200 individual moth eggs that
     were reared to caterpillars for experiment 2.
 
--    columns include:
+-   columns include:
 
-    -   clutchID
+```         
+-   clutchID
 
-    -   eggID
+-   eggID
 
-    -   code_name - the randomised code assigned to the photo, so that
-        photos were measured blind to treatment information
+-   code_name - the randomised code assigned to the photo, so that
+    photos were measured blind to treatment information
 
-    -   first photo - a '1' indicates that a first photo was taken
+-   first photo - a '1' indicates that a first photo was taken
 
-    -   size_01 - the measured area of the egg in mm\^2
+-   size_01 - the measured area of the egg in mm\^2
 
-    -    repeatability photo - a '1' indicates that a second photo was
-        taken to calculate repeatability of egg size measurements
+-    repeatability photo - a '1' indicates that a second photo was
+    taken to calculate repeatability of egg size measurements
 
-    -   size_02 - the area of the egg measured from the second photo
-        (the repeatability photo)
+-   size_02 - the area of the egg measured from the second photo
+    (the repeatability photo)
+```
 
 **HG_hatch_data(Sheet1).csv**
 
