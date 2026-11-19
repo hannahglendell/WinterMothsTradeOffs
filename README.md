@@ -124,27 +124,58 @@ editor_options:
 
 **wild moths spreadsheet.csv**
 
-\- contains data on the wild female winter moths caught in Wytham Woods
-in winter 2025, to act as a control group. - columns include: -
-female_ID - capture_date - tree_ID - the identity of the tree in Wytham
-Wood on which the female was caught using a lobster-pot trap -
-green_eggs - number of green eggs in clutch - orange_eggs - number of
-orange eggs in clutch - eggs_photographed - used to note whether the
-clutch had been photographed for measuring - egg_area - mean egg size in
-that clutch, laid by that female. - notes
+-   contains data on the wild female winter moths caught in Wytham Woods
+    in winter 2025, to act as a control group.
+
+-   columns include:
+
+    -   female_ID
+
+    -   capture_date
+
+    -   tree_ID - the identity of the tree in Wytham Wood on which the
+        female was caught using a lobster-pot trap
+
+    -   green_eggs - number of green eggs in clutch
+
+    -   orange_eggs - number of orange eggs in clutch
+
+    -   eggs_photographed - used to note whether the clutch had been
+        photographed for measuring
+
+    -   egg_area - mean egg size in that clutch, laid by that female. -
+        notes
 
 **wild raw egg sizes.csv**
 
- - contains the measurments of individual eggs measured from the
-photographs taken of the clutches of wild moths - columns include: -
-clutch_code - corresponds to female_ID column in wild moths
-spreadsheet.csv - egg_number - the number of the individual egg measured
-from that photograph - mean area - mean egg size of all eggs measured
-from the clutch photgraph. corresponds to egg_area in wild moths
-spreadsheet.csv
+-    contains the measurments of individual eggs measured from the
+    photographs taken of the clutches of wild moths
 
-**pupation data(Sheet1).csv** - pupation date of individuals used in
-experiment 1 - columns include: - pupa_id - date - notes - death_date
+-   columns include:
+
+    -   clutch_code - corresponds to female_ID column in wild moths
+        spreadsheet.csv
+
+    -   egg_number - the number of the individual egg measured from that
+        photograph
+
+    -   mean area - mean egg size of all eggs measured from the clutch
+        photograph. corresponds to egg_area in wild moths
+        spreadsheet.csv
+
+**pupation data(Sheet1).csv**
+
+-   pupation date of individuals used in experiment 1
+
+-   columns include:
+
+    -   pupa_id
+
+    -   date
+
+    -   notes
+
+    -   death_date
 
 ## Experiment 2
 
