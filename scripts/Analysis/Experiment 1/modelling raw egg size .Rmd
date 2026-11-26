@@ -12,6 +12,10 @@ library(lme4)
 library(emmeans)
 library(lmerTest)
 library(ggeffects)
+library(sjPlot)
+library(broom)
+library(gt)
+library(dplyr)
 ```
 working on the raw egg size measurements for each individual egg
 
@@ -77,7 +81,7 @@ egg_sizes_filtered <- raw_egg_sizes %>%
   mutate(weight_mg_centered = weight_mg - mean(weight_mg, na.rm = TRUE))
 
 
-
+#mean egg size in each pupal treatment
 egg_sizes_filtered %>%
   group_by(pupal_treatment) %>%
   summarise(mean_egg_size = mean(area), n = n())
@@ -86,124 +90,59 @@ egg_sizes_filtered %>%
 
 ```
 
-```{r}
-#look at the distributions of egg size
-ggplot(egg_sizes_filtered, aes(x = area)) +
-  geom_histogram(binwidth = 0.01) +  # change this value to control bin width +
-  labs(title = "Distribution of Egg Sizes",
-       x = "Egg Area",
-       y = "Count") +
-  theme_minimal()
-```
-
 
 ```{r}
 
+egg_size_model <- lmer(area ~ larval_treatment * pupal_treatment + (1|grandmotherID/motherID) + weight_mg_centered, data = egg_sizes_filtered)
+summary(egg_size_model)
 
-
-lm4 <- lmer(area ~ larval_treatment * pupal_treatment + (1|grandmotherID/motherID) + weight_mg_centered, data = egg_sizes_filtered)
-summary(lm4)
-
-anova(lm4)
-
-
-tab_model(lm4,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE) 
-
-#test the effect of the interaction term 
-lm4_no_interaction <- lmer(area ~ larval_treatment + pupal_treatment + (1|grandmotherID/motherID) + weight_mg_centered, data = egg_sizes_filtered)
-anova(lm4, lm4_no_interaction)
-#interaction effect not significant
-
-
-#test the overall effect of pupal temperature
-lm4_no_pupal <- lmer(area ~ larval_treatment + (1|grandmotherID/motherID) + weight_mg_centered, data = egg_sizes_filtered)
-anova(lm4_no_interaction, lm4_no_pupal)
-#pupal effect very significant
-
-#test the overall effect of larval temperature
-lm4_no_larval <- lmer(area ~ pupal_treatment + (1|grandmotherID/motherID) + weight_mg_centered, data = egg_sizes_filtered)
-anova(lm4_no_interaction, lm4_no_larval)
-#larval temp is significant overall
-
-#confint(lm4)
-#confidence intervals of larval treatment effects overlap with zero
+#use a type III anova because there is an interaction term???
+Anova(egg_size_model, type = "III")
 ```
 
 ```{r}
-#pairwise comparisons
-estimates marginal means for the pupal treatments
-emm <- emmeans(lm4_no_interaction, ~ pupal_treatment)
-emm
-pairs(emm)
-summary(emm)
-#significant difference between ambient-mean, ambient-warm, and ambient-hot.
+#TO MAKE WORD DOCUMENT OF THE MODEL OUTPUT
 
+# Automatically extract nested random effects and observation counts from egg_size_model
+vc <- as.data.frame(VarCorr(egg_size_model))
+ngrps <- summary(egg_size_model)$ngrps
 
-#estimate marginal means based on larval treatment
-emm <- emmeans(lm4_no_interaction, ~ larval_treatment)
-emm
-pairs(emm)
+re_note <- sprintf(
+  "Random effects: motherID:grandmotherID Variance = %.4f, SD = %.4f | grandmotherID Variance = %.4f, SD = %.4f | Residual Variance = %.4f, SD = %.4f (Number of obs: %d, groups: motherID:grandmotherID = %d, grandmotherID = %d).",
+  vc$vcov[1], vc$sdcor[1],
+  vc$vcov[2], vc$sdcor[2],
+  vc$vcov[3], vc$sdcor[3],
+  nobs(egg_size_model),
+  ngrps["motherID:grandmotherID"],
+  ngrps["grandmotherID"]
+)
 
-
-
-pred <- ggeffects::ggpredict(lm4_no_interaction,
-                  terms = c("pupal_treatment"))
-
-#assign colours to the temperatures                           
-temp_cols <- c(
-  ambient = "#484A4C",
-  cool    = "#76C0CC",
-  mean    = "#F9CA0F",
-  warm    = "#E87A36",
-  hot     = "#AF0808")
-
-ggplot(pred, aes(x = x, y = predicted)) +
-  geom_point(color = temp_cols) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                width = 0.1) +
-  #scale_y_continuous(limits = c(0.190, 0.215)) +
-  #scale_color_manual(values = temp_cols) +
-  labs(
-    x = "Resource allocation treatment",
-    y = expression(Predicted~egg~area~(mm^2))
-  ) +
-  theme_bw()
-
-egg_size_model <- ggplot(pred, aes(x = x, y = predicted)) +
-  # raw data
-  #geom_jitter(data = egg_sizes_filtered,
-            #  aes(x = pupal_treatment, y = area),
-            #  width = 0.15,
-            #  alpha = 0.4,
-            #  color = "grey") +
-  scale_y_continuous(breaks = seq(0.20, 0.21, by = 0.01)) +
-  
-  # model predictions
-  geom_point(color = temp_cols, size = 6) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                width = 0.1) +
-  
-  labs(
-    x = "Resource allocation temperature",
-    y = expression(Individual~egg~area~(mm^2)),
-    title = "B) Model estimates for individual egg size"
-  ) +
-  theme_bw() +
-    theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)
-    )
-
-egg_size_model
+modelsummary(
+  list(" " = egg_size_model),
+  effects = "fixed",
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "t value"    = "{statistic}",
+    "Pr(>|t|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA,
+  title = "Linear mixed model (REML) | Formula: area ~ larval_treatment * pupal_treatment + (1 | grandmotherID/motherID) + weight_mg_centered",
+  notes = c(
+    re_note,
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("egg_size_model.docx")
+)
 
 
 ```
+
+
+
+
 AMBIENT AND WILD COMPARISON
 ```{r}
 ambient_and_wild <- raw_egg_sizes %>%
@@ -214,13 +153,42 @@ ambient_and_wild <- raw_egg_sizes %>%
 lm1 <- lm(area ~ larval_treatment, data = ambient_and_wild)
 summary(lm1)
 
-tab_model(lm1,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE)
 ```
 
 
+```{r}
+#to make a word document of the model summary
+
+s <- summary(lm1)
+fstat <- s$fstatistic
+f_pval <- pf(fstat["value"], fstat["numdf"], fstat["dendf"], lower.tail = FALSE)
+
+lm_note <- sprintf(
+  "Residual standard error: %.3f on %d degrees of freedom | Multiple R-squared: %.4f, Adjusted R-squared: %.4f | F-statistic: %.2f on %d and %d DF, p-value: %.3g",
+  s$sigma, s$df[2],
+  s$r.squared, s$adj.r.squared,
+  fstat["value"], fstat["numdf"], fstat["dendf"], f_pval
+)
+
+modelsummary(
+  list(" " = lm1),
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "t value"    = "{statistic}",
+    "Pr(>|t|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA,
+  title = "Linear model (lm) | Formula: area ~ larval_treatment",
+  notes = c(
+    lm_note,
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("wild_egg_size_model.docx")
+)
+```
 
 
 

@@ -8,7 +8,7 @@ library(here)
 library(dplyr)
 ```
 
-
+REPEATABILITY OF INDIVIDUAL EGGS (EXPERIMENT 2)
 ```{r}
 egg_spreadsheet <- read.csv(here("data", "raw data", "eggs spreadsheet.csv"))
 ```
@@ -36,6 +36,9 @@ cor(repeatability_data$size_01, repeatability_data$size_02, use = "complete.obs"
 ```{r}
 icc(repeatability_data[, c(5,7)], model="twoway", type="agreement", unit="single")
 ```
+
+
+REPEATABILITY OF MEAN EGG SIZE (10 EGGS PER PHOTOGRAPH) (EXPERIMENT 1)
 ```{r}
 results <- read.csv(here("data", "clean data", "results.csv"))
 

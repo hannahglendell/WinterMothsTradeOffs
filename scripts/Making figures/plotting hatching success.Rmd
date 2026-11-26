@@ -1,0 +1,66 @@
+---
+title: "plotting hatching success"
+output: html_document
+---
+
+```{r}
+caterpillar_data <- read.csv(here("data", "clean data", "caterpillar_data.csv"))
+
+
+caterpillar_data$pupal_treatment <- as.factor(caterpillar_data$pupal_treatment)
+caterpillar_data$hatch_date <- as.Date(caterpillar_data$hatch_date)
+caterpillar_data$weight_1 <- as.numeric(caterpillar_data$weight_1)
+caterpillar_data$weight_2 <- as.numeric(caterpillar_data$weight_2)
+caterpillar_data$weight3 <- as.numeric(caterpillar_data$weight3)
+caterpillar_data$weight4 <- as.numeric(caterpillar_data$weight4)
+caterpillar_data$weight_5 <- as.numeric(caterpillar_data$weight_5)
+caterpillar_data$weight_6 <- as.numeric(caterpillar_data$weight_6)
+
+#turn all weights into mg
+caterpillar_data$weight_1 <- caterpillar_data$weight_1 * 1000
+caterpillar_data$weight_2 <- caterpillar_data$weight_2 * 1000
+caterpillar_data$weight3 <- caterpillar_data$weight3 * 1000
+caterpillar_data$weight4 <- caterpillar_data$weight4 * 1000
+caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
+caterpillar_data$weight_6 <- caterpillar_data$weight_6 * 1000
+
+```
+
+```{r}
+
+caterpillar_data <- caterpillar_data %>%
+  filter(!is.na(hatched))
+  
+#how many caterpillars hatches overall
+caterpillar_data %>%
+  filter(hatched == 1)
+
+hatching_plot <- ggplot(caterpillar_data, aes(x = factor(hatched, labels = c("Unhatched", "Hatched")), y = size_01)) +
+  geom_boxplot(width = 0.3, outlier.shape = NA) +
+  geom_jitter(width = 0.1, alpha = 0.25, size = 5) +
+  #scale_colour_manual(values = temp_cols) +
+  labs(x = "", y = expression(Egg~area~(mm^2)), title = "A) Hatching success", colour = "Allocation temperature") +
+  theme_bw() +
+  scale_y_continuous(
+    breaks = seq(0.18, 0.30, by = 0.02),
+    limits = c(0.18, 0.30)) +
+    theme(
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30),
+    #legend.position = c(0.98, 0.9),   # top-right inside
+  #legend.justification = c(1, 1),     # anchor legend box to its top-right corner
+  #legend.background = element_rect(fill = "white", colour = "black")  # optional: improve visibility
+    )
+
+hatching_plot
+
+
+
+
+
+```
+
+

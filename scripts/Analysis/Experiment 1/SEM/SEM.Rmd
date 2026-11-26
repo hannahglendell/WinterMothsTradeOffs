@@ -15,6 +15,9 @@ library(piecewiseSEM)
 library(dplyr)
 library(glmmTMB)
 library(semEff)
+library(officer)
+library(flextable)
+library(modelsummary)
 ```
 
 ```{r}
@@ -31,7 +34,7 @@ results$grandmotherID <- as.factor(results$grandmotherID)
 
 
 #only warm and hot larval treatments included in model
-#give each treatment its continuous temperature value
+#give each treatment its continuous temperature value - see scripts -> analysis -> appendix, for how these temperatures were calculated
 #convert weight into mg
 results_filtered <- results %>%
   filter(
@@ -60,20 +63,6 @@ sem_data <- results_filtered %>%
                 numerical_larval_treatment, numerical_pupal_treatment,
                 grandmotherID) %>%
   filter(!is.na(egg_mean_1A))
-
-#to do some sense checks on the model predictions
-#get the mean clutch size from warm and hot treatments
-results_warm <- sem_data %>%
-  filter(numerical_larval_treatment == 11.35602)
-mean(results_warm$clutch_size)
-#109
-
-
-results_hot <- sem_data %>%
-  filter(numerical_larval_treatment == 12.523)
-mean(results_hot$clutch_size)
-#139
-
 ```
 
 fitting the psem model
@@ -86,7 +75,7 @@ y_model <- glm.nb(clutch_size ~ numerical_larval_treatment + numerical_pupal_tre
 
 x_model <- lmer(egg_mean_1A ~ numerical_pupal_treatment + numerical_larval_treatment + weight_mg + (1|grandmotherID), data = sem_data)
 
-# SEM with correlated error between clutch size and egg size
+#SEM model
 sem_model <- psem(
   m_model,
   y_model,
@@ -116,26 +105,142 @@ rsquared(sem_model)
 ```
 
 
+
+
+
 ```{r}
 #use the semEff package to get standardised effects and confidence intervals
+#
+# You can run this but it takes ages so I just ran it once and then saved the output in the clean data folder. That is why it is commented out.
 #set.seed(123)
 #standardised_effects <- semEff(sem_model,R = 10000, ran.eff = "grandmotherID")
 
 #save the standardised effects so I don't have to re-run the bootstrap every time
 #saveRDS(standardised_effects, file = here("data", "clean data","standardised_effects.rds"))
 
-standardised_effects <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/standardised_effects.rds")
+standardised_effects <- readRDS(here("data", "clean data","standardised_effects.rds"))
 
 summary(standardised_effects)
 
-#tab_model(standardised_effects)
 
 ```
 
 
 
 ```{r}
+
+
+# Create Word document with SEM model output
+
+doc <- read_docx()
+
+doc <- body_add_par(
+  doc,
+  "SEM direct, indirect, total, and mediator effects",
+  style = "heading 1"
+)
+
+resps <- names(standardised_effects$Summary)[-1]
+total_resps <- length(resps)
+
+for (i in seq_along(resps)) {
+  
+  resp <- resps[i]
+  
+  # Extract summary table
+  mat <- as.data.frame(
+    standardised_effects$Summary[[resp]]
+  )
+  
+  # Extract effect names from first column
+  effect_name <- trimws(as.character(mat[[1]]))
+  
+  # Extract predictor names from second column
+  predictor <- trimws(as.character(mat[[2]]))
+  
+  # Extract relevant statistics
+  eff <- trimws(as.character(mat[["Effect"]]))
+  bias <- trimws(as.character(mat[["Bias"]]))
+  std_err <- trimws(as.character(mat[["Std. Err."]]))
+  lower_ci <- trimws(as.character(mat[["Lower CI"]]))
+  upper_ci <- trimws(as.character(mat[["Upper CI"]]))
+  
+  # Extract significance stars
+  sig <- trimws(as.character(mat[[ncol(mat)]]))
+  
+  eff <- ifelse(sig == "*", paste0(eff, "*"), eff)
+  
+  # Construct results dataframe
+  df <- data.frame(
+    Effect_Type = effect_name,
+    Effect_Name = predictor,
+    `Standardised Effect` = eff,
+    Bias = bias,
+    `Std. Err.` = std_err,
+    `Lower CI` = lower_ci,
+    `Upper CI` = upper_ci,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  
+  # Remove blank spacer rows
+  df <- df[
+    df$Effect_Type != "" |
+      df$Effect_Name != "",
+  ]
+  
+  # Create flextable
+  ft <- flextable(df) %>%
+    autofit() %>%
+    bold(part = "header") %>%
+    align(align = "center", part = "all") %>%
+    align(j = c("Effect_Type", "Effect_Name"),
+          align = "left", part = "all")
+  
+  # Add response heading
+  doc <- body_add_par(
+    doc,
+    sprintf("Response: %s (%d/%d)", resp, i, total_resps),
+    style = "heading 2"
+  )
+  
+  # Add table
+  doc <- body_add_flextable(doc, value = ft)
+  
+  doc <- body_add_par(doc, "")
+}
+
+# Add notes
+doc <- body_add_par(
+  doc,
+  paste(
+    "Notes: Standardised effects are reported alongside bootstrapped",
+    "bias, standard errors, and 95% BCa confidence intervals.",
+    "Bootstrap replicates: R = 1000, grouped by grandmotherID."
+  )
+)
+
+doc <- body_add_par(
+  doc,
+  "Significance code: * 95% confidence interval does not contain zero."
+)
+
+# Save Word document
+print(
+  doc,
+  target = here("sem_effects_tables.docx")
+)
+
+here("sem_effects_tables.docx")
+
+```
+
+
+```{r}
 #to get unstandardised (raw) coefficients
+#
+#
+#Again, this code is commented out because it takes a while to run. The output is saved in the clean data folder instead.
 #set.seed(123)
 # <- bootEff(sem_model, R = 10000, ran.eff = "grandmotherID", incl.raw = TRUE) 
 
@@ -143,28 +248,23 @@ summary(standardised_effects)
 
 #saveRDS(raw_effects, file = here("data", "clean data", "raw_effects.rds"))
 
-
-raw_effects <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/raw_effects.rds")
+raw_effects <- readRDS(here("data", "clean data", "raw_effects.rds"))
 
 summary(raw_effects)
-#tab_model(standardised_effects)
-
-
-
-
 ```
 
 now I want to generate model predictions so that I can plot them
 ```{r}
 #bootstrap estimates for the model
+#
+#again, this code is commented out because it is better to just load in the saved model estimates from the clean data folder
 #sem.boot <- bootEff(sem_model, R = 10000, seed = 123, ran.eff = "grandmotherID")
 
 #save this so i don't have to re-run this bootstrap every single time
 #saveRDS(sem.boot, file = here("data", "clean data", "sem.boot.rds"))
 
 #now read in the bootstrapped estimates for the model, that i saved earlier
-sem.boot <- readRDS("~/University stuff/Year 4/results/R project/data/clean data/sem.boot.rds")
-
+sem.boot <- readRDS(here("data", "clean data", "sem.boot.rds"))
 
 #use the bootstrap estimates to calculate effects and confidence intervals
 sem.eff <- semEff(sem.boot)
@@ -254,7 +354,7 @@ plotFit <- function(x, fit, rawdata, xvar, yvar, x.lab = NULL, y.lab = NULL) {
 }
 ```
 
-
+plot the total effect only
 ```{r}
 plotFit(
   x = x$numerical_larval_treatment,
@@ -266,7 +366,10 @@ plotFit(
   y.lab = "Clutch size"
 )
 ```
-now do this if i want to plot the direct, indirect and total effects all together in one plot
+
+
+
+Now do this to plot the direct, indirect and total effects all together in one plot
 
 ```{r}
 #join the predicted total, direct, and indirect effect into one dataframe
@@ -313,21 +416,17 @@ sem_predictions <- ggplot() +
   labs(
      x = expression("Resource acquisition temperature (" * degree * "C)"),
     y = "Clutch size (number of eggs)",
-    title = paste("B) Model predictions"),
+    title = paste("B) Conditional effects"),
     colour = "Effect",
     fill = "Effect"
   ) +
-   geom_point(aes(x = 11.35602, y = 109),
-             shape = 8, size = 8, colour = "black") +
-    geom_point(aes(x = 12.523, y = 139),
-             shape = 8, size = 8, colour = "black") +
   theme_bw() +
   theme(
-  text = element_text(size = 18),
-  axis.title = element_text(size = 20),
-  axis.text = element_text(size = 18),
-  legend.text = element_text(size = 18),
-  legend.title = element_text(size = 20),
+  text = element_text(size = 30),
+  axis.title = element_text(size = 30),
+  axis.text = element_text(size = 30),
+  legend.text = element_text(size = 30),
+  legend.title = element_text(size = 30),
   legend.position = c(0.95, 0.05),
   legend.justification = c("right", "bottom")
 ) +
@@ -344,5 +443,28 @@ scale_fill_manual(values = c(
 
 sem_predictions
 
+#save figure
+ggsave(
+  here("figures", "sem predictions.png"),
+  plot = sem_predictions,
+  width = 10,
+  height = 10,
+  dpi = 300
+)
+
+```
+```{r}
+#to do some sense checks on the model predictions
+#get the mean clutch size from warm and hot treatments
+results_warm <- sem_data %>%
+  filter(numerical_larval_treatment == 11.35602)
+mean(results_warm$clutch_size)
+#109
+
+
+results_hot <- sem_data %>%
+  filter(numerical_larval_treatment == 12.523)
+mean(results_hot$clutch_size)
+#139
 ```
 

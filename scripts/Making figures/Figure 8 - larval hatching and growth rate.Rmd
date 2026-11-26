@@ -1,0 +1,227 @@
+---
+title: "hatch dates"
+output: html_document
+---
+
+```{r}
+library(here)
+library(tidyverse)
+library(ggplot2)
+library(lmerTest)
+library(patchwork)
+```
+
+
+```{r}
+caterpillar_data <- read.csv(here("data", "clean data", "caterpillar_data.csv"))
+
+#caterpillar_data <- caterpillar_data %>%
+  #filter(!is.na(hatch_date)) 
+
+#save all weights as numbers not characters
+caterpillar_data$pupal_treatment <- as.factor(caterpillar_data$pupal_treatment)
+caterpillar_data$hatch_date <- as.Date(caterpillar_data$hatch_date)
+caterpillar_data$weight_1 <- as.numeric(caterpillar_data$weight_1)
+caterpillar_data$weight_2 <- as.numeric(caterpillar_data$weight_2)
+caterpillar_data$weight3 <- as.numeric(caterpillar_data$weight3)
+caterpillar_data$weight4 <- as.numeric(caterpillar_data$weight4)
+caterpillar_data$weight_5 <- as.numeric(caterpillar_data$weight_5)
+caterpillar_data$weight_6 <- as.numeric(caterpillar_data$weight_6)
+
+#turn all weights into mg
+caterpillar_data$weight_1 <- caterpillar_data$weight_1 * 1000
+caterpillar_data$weight_2 <- caterpillar_data$weight_2 * 1000
+caterpillar_data$weight3 <- caterpillar_data$weight3 * 1000
+caterpillar_data$weight4 <- caterpillar_data$weight4 * 1000
+caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
+caterpillar_data$weight_6 <- caterpillar_data$weight_6 * 1000
+
+#this dataset has 201 caterpillars but that is because AM321.07 appears twice. 
+#this caterpillar died before pupation so it will be removed anyway
+
+#save pupation date as a date
+ caterpillar_data <- caterpillar_data %>%
+   mutate(
+    pupation_date = as.Date(pupation_date, format = "%m/%d/%Y")
+  )
+
+
+#how many eggs hatched
+sum(!is.na(caterpillar_data$hatch_date))
+#181 eggs hatched
+
+#remove rows where hatched is NA, and where there are not at least two weights
+caterpillar_data <- caterpillar_data %>%
+  filter(!is.na(hatched)) %>% # remove those that didn't hatch
+  filter(status == "hatched") #take only caterpillars that hatched. remove ones that were lost, crushed, squashed, unhatched or died
+
+
+#remove this caterpillar because I made a mistake weighing it...
+caterpillar_data <- caterpillar_data %>%
+  filter(eggID != "AA297.06")
+
+
+```
+
+```{r}
+#fix the names of the columns
+names(caterpillar_data) <- names(caterpillar_data) %>%
+  gsub("^weight([0-9]+)$", "weight_\\1", .)
+
+#turn the data into long format
+long_data <- caterpillar_data %>%
+  mutate(id = row_number()) %>%
+  pivot_longer(
+    cols = matches("^(weight|weighday)_\\d+$"),
+    names_to = c(".value", "time"),
+    names_pattern = "(weight|weighday)_(\\d+)"
+  )
+
+#save weighday as a date
+long_data$weighday <- as.Date(
+  parse_date_time(long_data$weighday, orders = c("ymd", "mdy"))
+)
+
+#add a days post hatch column
+long_data <- long_data %>%
+  mutate(days_post_hatch = as.numeric(weighday - hatch_date)) %>%
+  filter(!is.na("weight"))
+
+```
+
+```{r}
+#remove rows with NAs
+long_data <- long_data %>%
+  dplyr::filter(
+    !is.na(weight),
+    !is.na(days_post_hatch),
+    !is.na(eggID)
+  ) %>%
+  mutate("log_weight" = log(weight),
+         "sqrt_weight" = sqrt(weight)) 
+
+
+#group the data by eggID, and then for each eggID estimate the best-fitting line using a quadratic equation. then extract the coefficient of that line (the slope). This is the growth rate of that caterpillar.
+slopes_non_linear <- long_data %>%
+  group_by(eggID) %>%
+  summarise(
+    slope = coef(lm(log_weight ~ days_post_hatch + I(days_post_hatch^2)))[2])
+
+mean(slopes_non_linear$slope)
+sd(slopes_non_linear$slope)
+
+```
+
+
+```{r}
+#TO MAKE A PLOT
+# Fit a quadratic model for each caterpillar
+quadratic_predictions <- long_data %>%
+  group_by(id) %>%
+  group_modify(~ {
+
+    # Fit the quadratic model
+    model <- lm(
+      log_weight ~ days_post_hatch + I(days_post_hatch^2),
+      data = .x
+    )
+
+    # Generate many time points for a smooth curve
+    new_data <- tibble(
+      days_post_hatch = seq(
+        min(.x$days_post_hatch),
+        max(.x$days_post_hatch),
+        length.out = 100
+      )
+    )
+
+    # Predict weight at each time point
+    new_data %>%
+      mutate(log_weight = predict(model, newdata = new_data))
+  }) %>%
+  ungroup()
+
+
+larval_growth <- ggplot() +
+  
+   # Quadratic curves
+  geom_line(
+    data = quadratic_predictions,
+    aes(x = days_post_hatch, y = log_weight, group = id, colour = factor(id)),
+    alpha = 0.6,
+    linewidth = 0.7
+  ) +
+  
+  # Raw observations
+  geom_point(
+    data = long_data,
+    aes(x = days_post_hatch, y = log_weight, colour = factor(id)),
+    alpha = 0.5,
+    size = 3.0
+  ) +
+   scale_colour_viridis_d(option = "viridis") +
+
+  labs(
+    x = "Days post hatch",
+    y = "log weight (mg)",
+    title = "A) Larval growth "
+  ) +
+  theme_minimal() + 
+  theme(legend.position = "none") +
+  theme(
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30))
+
+larval_growth
+```
+
+
+
+
+```{r}
+#now i want to join this back onto the caterpillar_data spreadsheet
+caterpillar_data <- caterpillar_data %>%
+  left_join(slopes_non_linear, by = "eggID")
+
+#mean and SD of slopes (growth rate)
+mean(caterpillar_data$slope)
+sd(caterpillar_data$slope)
+
+
+#plot the relationship between growth rate and egg size
+growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
+  geom_point(size = 5) +
+  labs( x = expression(Egg~area~(mm^2)), y = expression(Relative~growth~rate~(mg %.% mg^-1 %.% day^-1)), title = "B) Egg size vs larval growth rate") +
+  theme_bw() +
+  scale_x_continuous(
+    breaks = seq(0.18, 0.26, by = 0.02),
+    limits = c(0.18, 0.26)) +
+    theme(
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30)
+    )
+
+growth_rate
+
+#join together in a multi-panelled figure
+caterpillar_plot <-  larval_growth + growth_rate
+
+ggsave(
+  here("figures", "figure 8 - growth rate figure.png"),
+  plot = caterpillar_plot,
+  width = 20,
+  height = 10,
+  dpi = 300
+)
+
+```
+
+
+
+

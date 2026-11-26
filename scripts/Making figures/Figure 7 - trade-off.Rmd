@@ -47,14 +47,14 @@ coord_cartesian(xlim = c(0, 400), ylim = c(0.16, 0.24)) +
     labs(
        title = "B) Wild moths",
       y = expression(Mean~egg~area~(mm^2)),
-      x = "clutch size (number of eggs)") + 
+      x = "Clutch size (number of eggs)") + 
   theme_bw() + 
     theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30)
     )    # legend title bigger
 
 wild_moths_trade_off
@@ -76,21 +76,22 @@ coord_cartesian(xlim = c(0, 400), ylim = c(0.16, 0.24)) +
     labs(
       title = "A) Laboratory moths",
       y = expression(Mean~egg~area~(mm^2)),
-      x = "clutch size (number of eggs)") +
+      x = "Clutch size (number of eggs)") +
   theme_bw() + 
     theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)     # legend title bigger
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30)     # legend title bigger
   )
 
 lab_moths_trade_off
 
-
+#combine both figures into a multi-panelled plot
 trade_off_plot <-  lab_moths_trade_off + wild_moths_trade_off
 
+#save the figure
 ggsave(
   here("figures", "figure 8 - trade off.png"),
   plot = trade_off_plot,

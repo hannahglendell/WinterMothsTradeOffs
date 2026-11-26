@@ -57,34 +57,36 @@ clutch_size_plot <- ggplot(results,
     geom_vline(xintercept = 2.5, linetype = "dashed", size = 1.5, color = "black") +
     theme_bw() +
     theme(legend.position = "none") +
-   geom_point(aes(x = "warm", y = 109),
-               shape = 8, size = 8, colour = "black",
-               inherit.aes = FALSE) +
-   geom_point(aes(x = "hot", y = 138),
-               shape = 8, size = 8, colour = "black",
-               inherit.aes = FALSE) +
     labs(
       x = "Resource acquisition temperature",
       y = "Clutch size (number of eggs)",
-      title = paste("A) Observed clutch size")
+      #title = paste("A) Observed clutch size")
     ) +
-    theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)
-    )
+ theme(
+    text = element_text(size = 30),            # increases all text
+    axis.title = element_text(size = 30),      # axis titles bigger
+    axis.text = element_text(size = 30),       # axis tick labels bigger
+    legend.text = element_text(size = 30),     # legend text bigger
+    legend.title = element_text(size = 30)     # legend title bigger
+  )
 
 clutch_size_plot
 
+#ggsave(
+ # here("figures", "clutch size plot.png"),
+  #plot = clutch_size_plot,
+  #width = 20,
+  #height = 10,
+  #dpi = 300
+#)
 
 
-sem_plot <- clutch_size_plot + sem_predictions
+
+#sem_plot <- clutch_size_plot + sem_predictions
 
 ggsave(
-  here("figures", "figure 7 - sem plot.png"),
-  plot = sem_plot,
+  here("figures", "clutch size plot.png"),
+ plot = clutch_size_plot,
   width = 20,
   height = 10,
   dpi = 300

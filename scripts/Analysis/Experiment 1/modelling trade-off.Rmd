@@ -39,27 +39,17 @@ results <- results %>%
 #tests whether the relationshp between egg size and clutch size is dependent on pupal treatment
 #the interactions allows for different slopes for each larval treatment, and for different slopes depending on pupal treatment
 #so i have both random intercepts and random slope for each treatment
-lm2 <- lmer(egg_mean_1A ~ clutch_size * larval_treatment + clutch_size * pupal_treatment + weight_mg + (1|grandmotherID), data = results)
-summary(lm2)
-anova(lm2)
-#all interaction terms non-significant
+trade_off_model <- lmer(egg_mean_1A ~ clutch_size * larval_treatment + clutch_size * pupal_treatment + weight_mg + (1|grandmotherID), data = results)
+summary(trade_off_model)
 
-tab_model(lm2,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE) 
 
-confint(lm2)
-icc(lm2)
 
-#likelihood ratio for both interaction terms
-lm2_no_clutch_size <- update(lm2, . ~ . - clutch_size:larval_treatment - clutch_size:pupal_treatment)
-anova(lm2, lm2_no_clutch_size)
+# Type III anova because there is an interaction term in the model
+Anova(trade_off_model, type = "III")
 
-#likelihood ratio test for female mass
-lm2_no_weight <- update(lm2, . ~ . - larval_treatment - weight_mg)
-anova(lm2, lm2_no_weight)
-#female mass not a signficant predictor of egg size
+
+confint(trade_off_model)
+icc(trade_off_model)
 
 #maternal ID explains how much of the variance
 4.77e-05/(4.77e-05 + 1.15e-04)
@@ -69,10 +59,47 @@ anova(lm2, lm2_no_weight)
 vif(lm2)
 
 ```
+```{r}
+#make a word document of the model output
+# Automatically extract random effects and observation counts from trade_off_model
+vc <- as.data.frame(VarCorr(trade_off_model))
+ngrps <- summary(trade_off_model)$ngrps
+
+re_note <- sprintf(
+  "Random effects: grandmotherID (Intercept) Variance = %.4f, SD = %.4f | Residual Variance = %.4f, SD = %.4f (Number of obs: %d, groups: grandmotherID = %d).",
+  vc$vcov, vc$sdcor,
+  vc$vcov, vc$sdcor,
+  nobs(trade_off_model),
+  ngrps["grandmotherID"]
+)
+
+modelsummary(
+  list(" " = trade_off_model),
+  effects = "fixed",
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "t value"    = "{statistic}",
+    "Pr(>|t|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA,
+  title = "Linear mixed model (REML) | Formula: egg_mean_1A ~ clutch_size * larval_treatment + clutch_size * pupal_treatment + weight_mg + (1 | grandmotherID)",
+  notes = c(
+    re_note,
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("trade_off_model.docx")
+)
 
 
-WILD MOTHS
 
+```
+
+
+
+WILD MOTHS 
 ```{r}
 results <- read.csv(here("data", "clean data", "results.csv"), colClasses = c(sex = "character"))
 
@@ -81,17 +108,47 @@ results_wild <- results %>%
 
 #cant include pupal treament, larval treatment, weight (i didn't weigh them, oops), or maternalID - I don't have any of this information
 lm1 <- lm(egg_mean_1A ~ clutch_size, data = results_wild)
+
 summary(lm1)
 #non significant effect of clutch size on egg size
 
-tab_model(lm1,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE) 
-
-
-confint(lm1)
 ```
+```{r}
+#make a word document of the model output
+s <- summary(lm1)
+fstat <- s$fstatistic
+f_pval <- pf(fstat["value"], fstat["numdf"], fstat["dendf"], lower.tail = FALSE)
+
+lm_note <- sprintf(
+  "Residual standard error: %.3f on %d degrees of freedom | Multiple R-squared: %.4f, Adjusted R-squared: %.4f | F-statistic: %.2f on %d and %d DF, p-value: %.3g",
+  s$sigma, s$df[2],
+  s$r.squared, s$adj.r.squared,
+  fstat["value"], fstat["numdf"], fstat["dendf"], f_pval
+)
+
+modelsummary(
+  list(" " = lm1),
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "t value"    = "{statistic}",
+    "Pr(>|t|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA,
+  title = "Linear model (lm) | Formula: egg_mean_1A ~ clutch_size",
+  notes = c(
+    lm_note,
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("wild_trade_off_model.docx")
+)
+
+
+
+```
+
 
 
 

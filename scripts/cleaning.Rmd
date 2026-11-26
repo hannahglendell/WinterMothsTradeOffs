@@ -24,8 +24,8 @@ egg_counts$orange_eggs <- as.numeric(egg_counts$orange_eggs)
 
 egg_counts <- egg_counts %>%
   mutate(clutch_size = green_eggs + orange_eggs) %>%
-  filter(!startsWith(adultID, "F")) %>% #remove sienna's females
-  filter(sex == "F")
+  filter(!startsWith(adultID, "F")) %>% #remove sienna's females (these are from a different experiment)
+  filter(sex == "F") #keep only females
 
 #################################################################################################################################
 #read in the wild moths spreadsheet
@@ -62,19 +62,16 @@ egg_counts_clean <- egg_counts %>%
     )
   ) %>%
   mutate(
-    larval_treatment = recode(
+    larval_treatment = dplyr::recode(
       larval_treatment,
       CTRL = "ambient",
       MEAN = "mean",
       COOL = "cool",
       WARM = "warm",
       HOT  = "hot",
-      WTH = "wild"
-    ))
+      WTH = "wild")
+    )
 
-
-zero_eggs <- results %>%
-  filter(clutch_size == 0)
 ```
 
 ```{r}
@@ -106,6 +103,7 @@ results$sex <- as.character(results$sex)
 ```
 
 ```{r}
+#save as a csv file in the clean data folder
 write.csv(results, file = here("data", "clean data", "results.csv"), row.names = FALSE)
 
 ```
@@ -134,6 +132,7 @@ raw_egg_sizes_clean <- all_raw_egg_sizes %>%
 
 
 ```{r}
+#save as a csv file in the raw data folder
 write.csv(raw_egg_sizes_clean, file = here("data", "clean data", "raw egg sizes.csv"), row.names = FALSE)
 ```
 
@@ -175,19 +174,23 @@ ambient_data_feb2025$temperature <- as.numeric(ambient_data_feb2025$temperature)
 
 write.csv(ambient_data_feb2025, file = here("data", "clean data", "ambient temperatures.csv"), row.names = FALSE)
 ```
+
+
 CATERPILLAR HATCH DATE
 ```{r}
 eggs_spreadsheet <- read.csv(here("data", "raw data", "eggs spreadsheet(Sheet1).csv"))
 
-eggs_spreadsheet <- eggs_spreadsheet %>%
-  select(-hatch_date)
 
-hatch_dates <- read.csv(here("data", "raw data", "HG_hatch_data(Sheet1)1.csv"))
+
+
+hatch_dates <- read.csv(here("data", "raw data", "HG_hatch_data(Sheet1)2.csv"))
 
 
 
 caterpillar_data <- eggs_spreadsheet %>%
   left_join(hatch_dates, by = "eggID")
+
+#AM321.07 is duplicated in this spreadsheet, but it didn't survive to pupation so it should be excluded from the analysis anyway
 
 #make a column of pupal_treatment
 caterpillar_data <- caterpillar_data %>%
@@ -202,35 +205,26 @@ caterpillar_data <- caterpillar_data %>%
   select(-second_letter)
 
 #make at status column
-#caterpillar_data <- caterpillar_data %>%
- # mutate(status = case_when(
-#   weighday_1 == "lost" ~ "lost",
- #   str_detect(weighday_1, "dead") ~ "dead",
-
- #  hatch_date == "empty" ~ "empty",
- #  hatch_date == "crushed" ~ "crushed",
-  #  is.na(hatch_date) ~ "unhatched",
-
-  #  !is.na(mdy(weighday_1)) ~ "hatched",
-
- #  TRUE ~ NA_character_
- # ))
-
 caterpillar_data <- caterpillar_data %>%
   mutate(status = case_when(
     
-    if_any(starts_with("weighday_"), ~ str_detect(.x, "lost")) ~ "lost",
+    if_any(everything(), ~ str_detect(as.character(.x), "lost")) ~ "lost",
     
-    if_any(starts_with("weighday_"), ~ str_detect(.x, "dead")) ~ "dead",
+    if_any(everything(), ~ str_detect(as.character(.x), "dead")) ~ "dead",
+    
+    if_any(everything(), ~ str_detect(as.character(.x), "squashed")) ~ "squashed",
+    
+    if_any(everything(), ~ str_detect(as.character(.x), "empty")) ~ "empty",
+    
+    if_any(everything(), ~ str_detect(as.character(.x), "crushed")) ~ "crushed",
 
-    hatch_date == "empty" ~ "empty",
-    hatch_date == "crushed" ~ "crushed",
     is.na(hatch_date) ~ "unhatched",
 
     !is.na(mdy(weighday_1)) ~ "hatched",
 
     TRUE ~ NA_character_
   ))
+
 
 #make a numerical column about whether or not it hatched
 caterpillar_data <- caterpillar_data %>%
@@ -239,7 +233,7 @@ caterpillar_data <- caterpillar_data %>%
     status %in% c("dead", "hatched", "lost") ~ 1
   ))
 
-
+#save all dates as dates
 caterpillar_data$hatch_date <- as.Date(caterpillar_data$hatch_date, format = "%m/%d/%Y")
 caterpillar_data$weighday_1 <- as.Date(caterpillar_data$weighday_1, format = "%m/%d/%Y")
 caterpillar_data$weighday_2 <- as.Date(caterpillar_data$weighday_2, format = "%m/%d/%Y")
@@ -248,8 +242,9 @@ caterpillar_data$weighday_4 <- as.Date(caterpillar_data$weighday_4, format = "%m
 
 
 
-
+#save into clean data folder
 write.csv(caterpillar_data, file = here("data", "clean data", "caterpillar_data.csv"), row.names = FALSE)
+
 
 
 ```

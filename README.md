@@ -6,15 +6,31 @@ editor_options:
 
 # Repository structure
 
-This repostory has four folders - data, figures, renv and scripts
+This repository contains all the data and code associated with the paper
+'Developmental temperature shapes reproductive allocation in the absence
+of a number-quality trade-off in the winter moth' (Glendell, Learmonth &
+Sheldon). DOI:
 
--   data contains the raw data and clean data. Data cleaning performed
+Note that throughout the code, 'larval treatment' is used to denote
+resource acquisiton temperature, and 'pupal treatment' i used to denote
+resource allocation treatment. See the paper for methods.
+
+Note that throughout this repository, the analysis is split into
+'experiment 1' and 'experiment 2'. **Experiment 1** refers to the
+experiment investigating how developmental temperature affects clutch
+size, egg size, and their trade-off. **Experiment 2** refers to the
+experiment investigating the fitness effects of egg size.
+
+This repository has four folders - data, figures, renv and scripts
+
+-   data - contains the raw data and clean data. Data cleaning performed
     in cleaning.Rmd found in scripts folder. Also contains some saved
-    outputs from the structural equation modelling
+    outputs from the structural equation modelling. RUN THE CLEANING
+    FILE FIRST.
 
 -   figures - figures saved as .png
 
--   renv - all the R packages used in this repository
+-   renv - R package versions used in this repository
 
 -   scripts - scripts for all analyses and for creating figures. First
     run the cleaning.Rmd to clean all the data. Then there are two
@@ -22,10 +38,12 @@ This repostory has four folders - data, figures, renv and scripts
 
     -   Analysis
 
-        -   Appendix - Ambient temperature contains code for calculating
-            the life cycle dates of wild winter moths, and code for
-            calculating the mean temperature in each treatment during
-            'resource acquisition' and 'resource allocation' periods
+        -   Appendix - contains code for calculating the life cycle
+            dates of wild winter moths, and code for calculating the
+            mean temperature in each treatment during 'resource
+            acquisition' and 'resource allocation' periods. Contains
+            hurdle models used to make sure that removing zero values
+            from the PSEM was justified.
 
         -   Experiment 1 - all code for experiment 1, including analysis
             on clutch size, egg size, their trade-off, and the SEM
@@ -48,6 +66,34 @@ This repostory has four folders - data, figures, renv and scripts
     recorded using a thermologger device.
 
 -   contains two columns; datetime and temperature
+
+**mbiols_daily_temperature_data.csv**
+
+-   Contains the temperatures that were programmed into the four
+    incubator treatments (cool, mean, warm and hot) each day over the
+    course of one year.
+
+-   columns include:
+
+    -   programme_num - The PHCbi MLR-352_PE incubators could take up to
+        8 programmes at once
+    -   date_1
+    -   date_end - each daily temperature cycle was repeated for two
+        days. date_1 and date_end show the two dates when that
+        temperature cycle was programmed
+    -   Month
+    -   daylight - whether incubator light was on or off
+    -   Hour_group
+    -   TwoHourGroup
+    -   plus2.5 - tempeature programmed into the 'hot' treatment in
+        degrees celcius
+    -   plus - 1.5 - temperature programmed into the 'warm' treatment
+    -   actual.mean - temperature programmed into the mean treatment
+    -   minus1.5 - temperature programmed into the cool treatment
+    -   minus2.5 - temperature programmed into a discontinued 'cold'
+        treatment used in other experiments.
+    -   sunrise - time of light on in incubator
+    -   sunset - time of life off in incubator
 
 **raw egg sizes.csv**
 
@@ -103,11 +149,11 @@ This repostory has four folders - data, figures, renv and scripts
 
     -   emergence_date - date of adult emerging from pupa -
 
-    -   sex -
+    -   sex
 
     -   adultID
 
-    -   weight
+    -   weight - weight of adults female moth in grams
 
     -   mateID
 

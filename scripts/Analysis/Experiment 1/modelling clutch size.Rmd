@@ -12,6 +12,12 @@ library(MASS)
 library(pscl)
 library(dplyr)
 library(glmmTMB)
+library(gtsummary)
+library(flextable)
+library(car)
+library(modelsummary)
+library(broom.mixed)
+
 ```
 
 AMBIENT, WARM AND HOT LARVAL TREATMENT
@@ -23,6 +29,9 @@ results$grandmotherID <- as.factor(results$grandmotherID)
 
 #how many eggs were counted in total
 sum(results$clutch_size) 
+
+# Count rows where clutch_size is between 1 and 9 eggs, inclusive
+sum(results$clutch_size >= 1 & results$clutch_size <= 9, na.rm = TRUE)
 
 #mean and SD of clutch size, excluding clutches of 0 eggs
 results <- results %>%
@@ -52,22 +61,12 @@ clutch_size_distribution <- ggplot(results, aes(x = clutch_size)) +
 
 clutch_size_distribution
 
-#join together with histogram of egg size, from a different script
-distributions <-  egg_size_distribution + clutch_size_distribution
-
-ggsave(
-  here("figures", "distributions.png"),
-  plot = distributions,
-  width = 20,
-  height = 10,
-  dpi = 300
-)
 
 
 #number of mated females in each treatment group 
 table(results$treatment_combination)
 
-
+#only want ambient, warm and hot larval treatments for the model
 results_filtered <- results %>%
   filter(
     larval_treatment %in% c("ambient", "warm", "hot")) %>%
@@ -88,26 +87,6 @@ results_filtered <- results_filtered %>%
   )
 ```
 
-```{r}
-
-#including ambient pupal treatment
-results_filtered %>%
-  group_by(larval_treatment) %>%
-  summarise(mean_clutch_size = mean(clutch_size, na.rm = TRUE),
-            n = n(),
-            sd = sd(clutch_size, na.rm = TRUE))
-
-
-
-#not including ambient pupal treatment (same as used in PSEM)
-results_filtered %>%
-  filter(pupal_treatment != "ambient") %>%
-  group_by(larval_treatment) %>%
-  summarise(mean_clutch_size = mean(clutch_size, na.rm = TRUE),
-            n = n(),
-            sd = sd(clutch_size, na.rm = TRUE))
-
-```
 
 ```{r}
 #look at the distribution of clutch size
@@ -139,57 +118,42 @@ ggplot(results, aes(x = egg_mean_1A)) +
 
 
 ```{r}
-lm1 <- glmmTMB(clutch_size ~ larval_treatment * pupal_treatment + weight_mg_centered + (1|grandmotherID), family = nbinom2, data = results_filtered)
-summary(lm1)
-#as expected from path analysis, including the ambient group doesn't change anything - female mass is signficant, no direct effect of larval or pupal temp on clutch size
-
-#this doesn't work for a negative binomial model
-#anova(lm1)
-
-tab_model(lm1,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE) 
-
-lm1_no_interaction <- glmmTMB(clutch_size ~ larval_treatment + pupal_treatment + weight_mg_centered + (1|maternalID), family = nbinom2, data = results_filtered)
-anova(lm1, lm1_no_interaction)
-#interaction term doesn't improve fit
+clutch_size_model <- glmmTMB(clutch_size ~ larval_treatment * pupal_treatment + weight_mg_centered + (1|grandmotherID), family = nbinom2, data = results_filtered)
+summary(clutch_size_model)
 
 
-lm1_no_larval <- glmmTMB(
-  clutch_size ~ pupal_treatment + weight_mg_centered + (1 | maternalID),
-  family = nbinom2,
-  data = results_filtered)
-anova(lm1_no_interaction, lm1_no_larval)
-#larval treatment doesnt improve fit
-
-lm1_no_pupal <- glmmTMB(
-  clutch_size ~ larval_treatment + weight_mg_centered + (1 | maternalID),
-  family = nbinom2,
-  data = results_filtered)
-anova(lm1_no_interaction, lm1_no_pupal)
-#pupal treatment doesn't improve fit
-
-lm1_no_weight <- glmmTMB(
-  clutch_size ~ larval_treatment + pupal_treatment + (1 | maternalID),
-  family = nbinom2,
-  data = results_filtered)
-anova(lm1_no_interaction, lm1_no_weight)
-#weight does improve model fit
-
-#how much of the variation in clutch size is explained by female mass?
-
-r2_full <- r2(lm1)
-r2_full
-
-r2_nomass <- r2(lm1_no_weight)
-r2_nomass
-
-r2_full$R2_marginal - r2_nomass$R2_marginal
+# Type III anova because there is an interaction term in the model
+Anova(clutch_size_model, type = "III")
 
 
-icc(lm1)
+icc(clutch_size_model)
 #grandmother identity explains just 4% of the variation in clutch size
+
+
+#make a word document of the model output
+modelsummary(
+  list(" " = clutch_size_model),
+  effects = "fixed",
+  component = "cond",
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "z value"    = "{statistic}",
+    "Pr(>|z|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA, # Removes Num.Obs., R2, AIC, BIC, ICC, RMSE completely
+  title = "Family: nbinom2 (log) | Formula: clutch_size ~ larval_treatment * pupal_treatment + weight_mg_centered + (1 | grandmotherID)",
+  notes = c(
+    "Random effects: grandmotherID (Intercept) Variance = 0.01929, SD = 0.1389 (Number of obs: 286, groups: grandmotherID, 73).",
+    "Dispersion parameter for nbinom2 family: 1.73.",
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("clutch_size_model.docx")
+)
+
+
 
 ```
 
@@ -215,11 +179,28 @@ results_filtered_wild %>%
 lm2 <- glmmTMB(clutch_size ~ larval_treatment, family = nbinom2, data = results_filtered_wild)
 summary(lm2)
 
-
-tab_model(lm2,
-          transform = NULL,   
-          show.se = TRUE,   
-          show.ci = FALSE) 
-
+modelsummary(
+  list(" " = lm2),
+  effects = "fixed",
+  component = "cond",
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "z value"    = "{statistic}",
+    "Pr(>|z|)"   = "{p.value}"
+  ),
+  shape = term ~ model + statistic,
+  fmt = 3,
+  gof_map = NA,
+  title = "Family: nbinom2 (log) | Formula: clutch_size ~ larval_treatment",
+  notes = c(
+    paste0(
+      "Number of obs: ", nobs(lm2),
+      " | Dispersion parameter for nbinom2 family: ", round(sigma(lm2), 2)
+    ),
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("wild_clutch_size_model.docx")
+)
 ```
 

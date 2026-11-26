@@ -1,5 +1,5 @@
 ---
-title: "calculatin mean temp in each treatment"
+title: "calculating mean temp in each treatment"
 output: html_document
 ---
 
@@ -12,6 +12,7 @@ library(lubridate)
 ```
 
 ```{r}
+#read in the thermologger data that shows the temperature experienced by the ambient control group
 ambient_temperatures <- read.csv(here("data", "clean data", "ambient temperatures.csv"))
 
 ambient_temperatures$datetime <- parse_date_time(
@@ -60,6 +61,7 @@ ambient_daily_means <- ambient_daily_means %>%
 
 
 ```{r}
+#now to calculate the mean temperature in the incubator treatments during resource acquisition and allocation
 incubator_treatments <- read.csv(here("data", "raw data", "mbiols_daily_temperature_data.csv"))
 
 #to make sure dates are stored as dates, and temperatures as numbers
@@ -82,7 +84,7 @@ incubator_treatments <- incubator_treatments %>%
     names_to = "date_type",
     values_to = "date") %>%
   dplyr::select(-date_type) %>%
-  select(programme_num, Month, daylight, Hour_group, TwoHourGroup, plus2.5, plus1.5, actual.mean, minus1.5, minus2.5, sunrise, sunset, date)
+  dplyr::select(X...programme_num, Month, daylight, Hour_group, TwoHourGroup, plus2.5, plus1.5, actual.mean, minus1.5, minus2.5, sunrise, sunset, date)
 
 
 colnames(incubator_treatments)

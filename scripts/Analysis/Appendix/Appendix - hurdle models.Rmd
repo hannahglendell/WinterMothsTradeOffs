@@ -79,9 +79,54 @@ AIC(pois_mod, nb_mod)
 ```
 
 
-
 ```{r}
+#make the hurdle model
 mod.hurdl_4 <- glmmTMB(clutch_size ~ larval_treatment + pupal_treatment + weight_mg_centered + (1 | grandmotherID), ziformula = ~ larval_treatment + pupal_treatment + weight_mg_centered, family = truncated_nbinom2, data = results_filtered)
+
+
+# Dynamically extract random effects, group count, and dispersion from mod.hurdl_4
+vc <- VarCorr(mod.hurdl_4)$cond$grandmotherID
+re_var <- as.numeric(vc)
+re_sd <- attr(vc, "stddev")
+ngrps <- summary(mod.hurdl_4)$ngrps$cond["grandmotherID"]
+
+re_note <- sprintf(
+  "Random effects (Conditional): grandmotherID (Intercept) Variance = %.5f, SD = %.4f (Number of obs: %d, groups: grandmotherID, %d).",
+  re_var, re_sd, nobs(mod.hurdl_4), ngrps
+)
+
+disp_note <- sprintf(
+  "Dispersion parameter for truncated_nbinom2 family: %.2f.",
+  sigma(mod.hurdl_4)
+)
+
+modelsummary(
+  list(" " = mod.hurdl_4),
+  effects = "fixed",
+  estimate = "{estimate}{stars}",
+  statistic = c(
+    "Std. Error" = "{std.error}",
+    "z value"    = "{statistic}",
+    "Pr(>|z|)"   = "{p.value}"
+  ),
+  shape = component + term ~ model + statistic, # Keeps both 'cond' and 'zi' sections without duplicate errors
+  fmt = 3,
+  gof_map = NA,
+  title = "Family: truncated_nbinom2 (log) | Formula: clutch_size ~ larval_treatment + pupal_treatment + weight_mg_centered + (1 | grandmotherID) | ZI: ~ larval_treatment + pupal_treatment + weight_mg_centered",
+  notes = c(
+    re_note,
+    disp_note,
+    "Signif. codes: *** p < 0.001, ** p < 0.01, * p < 0.05, . p < 0.1"
+  ),
+  output = here("mod_hurdl_4.docx")
+)
+
+
+
+
+
+
+
 summary(mod.hurdl_4)
 AIC(mod.hurdl_4)
 #2467
@@ -95,10 +140,8 @@ tab_model(mod.hurdl_4,
 ```
 
 
-
-
-
 ```{r}
+#checking the assumptions of this model
 library(DHARMa)
 
 # simulate residuals

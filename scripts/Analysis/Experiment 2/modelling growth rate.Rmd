@@ -22,10 +22,15 @@ caterpillar_data <- read.csv(here("data", "clean data", "caterpillar_data.csv"))
 #caterpillar_data <- caterpillar_data %>%
   #filter(!is.na(hatch_date)) 
 
+#save all weights as numbers not characters
 caterpillar_data$pupal_treatment <- as.factor(caterpillar_data$pupal_treatment)
 caterpillar_data$hatch_date <- as.Date(caterpillar_data$hatch_date)
 caterpillar_data$weight_1 <- as.numeric(caterpillar_data$weight_1)
 caterpillar_data$weight_2 <- as.numeric(caterpillar_data$weight_2)
+caterpillar_data$weight3 <- as.numeric(caterpillar_data$weight3)
+caterpillar_data$weight4 <- as.numeric(caterpillar_data$weight4)
+caterpillar_data$weight_5 <- as.numeric(caterpillar_data$weight_5)
+caterpillar_data$weight_6 <- as.numeric(caterpillar_data$weight_6)
 
 #turn all weights into mg
 caterpillar_data$weight_1 <- caterpillar_data$weight_1 * 1000
@@ -33,14 +38,53 @@ caterpillar_data$weight_2 <- caterpillar_data$weight_2 * 1000
 caterpillar_data$weight3 <- caterpillar_data$weight3 * 1000
 caterpillar_data$weight4 <- caterpillar_data$weight4 * 1000
 caterpillar_data$weight_5 <- caterpillar_data$weight_5 * 1000
+caterpillar_data$weight_6 <- caterpillar_data$weight_6 * 1000
+
+#this dataset has 201 caterpillars but that is because AM321.07 appears twice. 
+#this caterpillar died before pupation so it will be removed anyway
+
+#save pupation date as a date
+ caterpillar_data <- caterpillar_data %>%
+   mutate(
+    pupation_date = as.Date(pupation_date, format = "%m/%d/%Y")
+  )
+
+
+
+#how many eggs hatched
+sum(!is.na(caterpillar_data$hatch_date))
+#181 eggs hatched
 
 #remove rows where hatched is NA, and where there are not at least two weights
 caterpillar_data <- caterpillar_data %>%
   filter(!is.na(hatched)) %>% # remove those that didn't hatch
-  filter(!is.na(weight3)) %>% #remove those that haven't been weighed up to at least 30 days post hatching
-  dplyr::select(-weight_5) %>% # remove weight at 42 days post hatching
-  dplyr::select(-weight_6) %>% 
-  filter(status != "dead") #remove caterpillars that have died
+  filter(status == "hatched") #take only caterpillars that hatched. remove ones that were lost, crushed, squashed, unhatched or died
+
+
+#remove this caterpillar because I made a mistake weighing it...
+caterpillar_data <- caterpillar_data %>%
+  filter(eggID != "AA297.06")
+
+#how many caterpillars were weighed at weighday_3
+caterpillar_data %>%
+  summarise(count_weight4 = sum(!is.na(weight3) & weight3 != ""))
+
+
+#how many caterpillars were weighed at weighday_4
+caterpillar_data %>%
+  summarise(count_weight4 = sum(!is.na(weight4) & weight4 != ""))
+
+#AM395.10 was the very last caterpillar to hatch, and so it developed really fast and pupated before it could be weighed at weight4 (day 36)
+
+
+#how many caterpillars were weighed at weighday_5
+caterpillar_data %>%
+  summarise(count_weight_5 = sum(!is.na(weight_5) & weight_5 != ""))
+
+
+#how many caterpillars were weighed at weighday_6
+caterpillar_data %>%
+  summarise(count_weight_6 = sum(!is.na(weight_6) & weight_6 != ""))
 
 ```
 
@@ -59,20 +103,14 @@ long_data <- caterpillar_data %>%
   )
 
 #save weighday as a date
-long_data$weighday <- as.Date(long_data$weighday)
+long_data$weighday <- as.Date(
+  parse_date_time(long_data$weighday, orders = c("ymd", "mdy"))
+)
 
 #add a days post hatch column
 long_data <- long_data %>%
   mutate(days_post_hatch = as.numeric(weighday - hatch_date)) %>%
   filter(!is.na("weight"))
-
-#remove this caterpillar because I made a mistake weighing it...
-caterpillar_data <- caterpillar_data %>%
-  filter(eggID != "AA297.06")
-
-#how many caterpillars were weighed at weighday_4
-caterpillar_data %>%
-  summarise(count_weight4 = sum(!is.na(weight_4) & weight_4 != ""))
 
 ```
 
@@ -84,208 +122,55 @@ long_data <- long_data %>%
     !is.na(days_post_hatch),
     !is.na(eggID)
   ) %>%
-  mutate("log_weight" = log(weight))
+  mutate("log_weight" = log(weight),
+         "sqrt_weight" = sqrt(weight)) 
 
-#group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
-slopes <- long_data %>%
+
+#group the data by eggID, and then for each eggID estimate the best-fitting line using a quadratic equation. then extract the coefficient of that line (the slope). This is the growth rate of that caterpillar.
+slopes_non_linear <- long_data %>%
   group_by(eggID) %>%
   summarise(
-    slope = coef(lm(log_weight ~ days_post_hatch))[2])
+    slope = coef(lm(log_weight ~ days_post_hatch + I(days_post_hatch^2)))[2])
+
+mean(slopes_non_linear$slope)
+sd(slopes_non_linear$slope)
+
 ```
 
 
+
+
 ```{r}
-
-#random intercepts and random slopes for each egg
-#model <- lmer(weight ~  days_post_hatch + (days_post_hatch | eggID), data = long_data)
-#summary(model)
-#coef(model)$eggID
-#at the moment this model is singular but hopefully that will be resolved once I have more data??
-
-#extract the slope (the gradient) of the line for each egg
-#slopes_df <- data.frame(
- # eggID = rownames(coef(model)$eggID),
-#  slope = coef(model)$eggID[, "days_post_hatch"]
-#)
+#this is just an interesting plot. not printed in the paper
+#plot the growth of each caterpillar over time
+ggplot(long_data, aes(x = days_post_hatch, y = log_weight, group = id)) +
+  geom_line(alpha = 0.5) +
+  geom_point() +
+  labs(x = "days post hatch", y = "log weight (mg)", title = "Caterpillar growth over time") +
+  theme_minimal()
+```
 
 
 
+```{r}
 #now i want to join this back onto the caterpillar_data spreadsheet
 caterpillar_data <- caterpillar_data %>%
-  left_join(slopes, by = "eggID")
+  left_join(slopes_non_linear, by = "eggID")
 
 #mean and SD of slopes (growth rate)
 mean(caterpillar_data$slope)
 sd(caterpillar_data$slope)
 
 
-#plot the relationship between growth rate and egg size
-growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
-  geom_point(size = 5) +
-  labs( x = expression(Egg~area~(mm^2)), y = expression(Relative~growth~rate~(mg %.% mg^-1 %.% day^-1)), title = "B) Larval growth rate") +
-  theme_bw() +
-  scale_x_continuous(
-    breaks = seq(0.18, 0.26, by = 0.02),
-    limits = c(0.18, 0.26)) +
-    theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)
-    )
-
-growth_rate
-
-
 #now make a model of growth rate and size
 model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpillar_data)
 summary(model)
-AIC(model)
-
-icc(model)
-
-plot(model)
-qqnorm(resid(model))
-qqline(resid(model))
-
-library(DHARMa)
-sim_res <- simulateResiduals(model)
-plot(sim_res)
-
-
-hist(long_data$weight)
-
-#AIC with using log weights in -236
-# size is significant but pupal treatment isn't
-
-#AIC using raw weights is 288
-#neither size or pupal treatment is significant
-```
-
-
-
-
-```{r}
-#USING LOG OF WEIGHT
-
-#group the data by eggID, and then for each eggID estimate the best-fitting line. then extract the coefficient of that line (the slope). This is the growth rate of the caterpillar as mg per day/
-
-#Removing this one data point makes it non-significant
-caterpillar_data <- caterpillar_data %>%
-  filter(eggID != "AA144.02")
-
-
-slopes <- long_data %>%
-  group_by(eggID) %>%
-  summarise(
-    slope = coef(lm(log_weight ~ days_post_hatch))[2]
-  )
-
-#now i want to join this back onto the caterpillar_data spreadsheet
-caterpillar_data <- caterpillar_data %>%
-  left_join(slopes, by = "eggID")
-
-#plot the relationship between growth rate and egg size
- growth_rate <- ggplot(caterpillar_data, aes(x = size_01, y = slope)) +
-  geom_point(size = 3) +
-labs( x = expression(Egg~area~(mm^2)), y = expression(relative~growth~rate~(mg %.% mg^-1 %.% day^-1)), title = "B) Growth rate") + 
-  theme_bw() +
-  scale_x_continuous(
-    breaks = seq(0.18, 0.26, by = 0.02),
-    limits = c(0.18, 0.26)) +
-    theme(
-    text = element_text(size = 18),            # increases all text
-    axis.title = element_text(size = 20),      # axis titles bigger
-    axis.text = element_text(size = 18),       # axis tick labels bigger
-    legend.text = element_text(size = 18),     # legend text bigger
-    legend.title = element_text(size = 20)
-    )
- 
- growth_rate
-
-
-
-
-
-#now make a model of growth rate and size
-model <- lmer(slope ~ size_01 + pupal_treatment + (1|clutchID), data = caterpillar_data)
-summary(model)
-
-
-
-#looking at all these model diagnostics, it doesn't seem like logging the changes the model fit very much
-plot(model)
-qqnorm(resid(model))
-qqline(resid(model))
-
-sim_res <- simulateResiduals(model)
-plot(sim_res)
-
-plot(model)
-
-
-hist(long_data$log_weight)
-
 ```
 
 
 
 
 
-```{r}
-#random intercepts and random slopes
-model <- lmer(weight ~ days_post_hatch * size_01 + pupal_treatment + (1 | clutchID) + (days_post_hatch | eggID), data = long_data)
-
-summary(model)
-
-#random intercepts only
-model <- lmer(weight ~ days_post_hatch * size_01 + pupal_treatment + (1 | clutchID/eggID), data = long_data)
-summary(model)
 
 
-model <- lmer(weight ~ days_post_hatch * size_01 + days_post_hatch * pupal_treatment + (1|clutchID/eggID), data = long_data)
-
-summary(model)
-
-plot(model)
-
-
-slopes <- long_data %>%
-  group_by(eggID) %>%
-  summarise({
-    m1 <- lm(weight ~ days_post_hatch)
-    m2 <- lm(log(weight) ~ days_post_hatch)
-    
-    pred1 <- predict(m1)
-    pred2 <- exp(predict(m2))  # back-transform
-    
-    rmse_raw <- sqrt(mean((weight - pred1)^2))
-    rmse_log <- sqrt(mean((weight - pred2)^2))
-    
-    tibble(
-      rmse_raw = rmse_raw,
-      rmse_log = rmse_log
-    )
-  })
-
-residuals_df <- long_data %>%
-  group_by(eggID) %>%
-  mutate(
-    resid_raw = resid(lm(weight ~ days_post_hatch)),
-    fitted_raw = fitted(lm(weight ~ days_post_hatch)),
-    
-    resid_log = resid(lm(log(weight) ~ days_post_hatch)),
-    fitted_log = fitted(lm(log(weight) ~ days_post_hatch))
-  )
-
-
-ggplot(residuals_df, aes(fitted_raw, resid_raw)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "dashed") 
-
-ggplot(residuals_df, aes(fitted_log, resid_log)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "dashed")
-```
 
