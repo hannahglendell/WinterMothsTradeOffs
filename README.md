@@ -7,9 +7,8 @@ editor_options:
 # Repository structure
 
 This repository contains all the data and code associated with the paper
-'Developmental temperature shapes reproductive allocation in the absence
-of a number-quality trade-off in the winter moth' (Glendell, Learmonth &
-Sheldon). DOI:
+'Developmental temperature shapes reproductive output in the absence of
+a number-quality trade-off in the winter moth'
 
 Note that throughout the code, 'larval treatment' is used to denote
 resource acquisiton temperature, and 'pupal treatment' i used to denote
