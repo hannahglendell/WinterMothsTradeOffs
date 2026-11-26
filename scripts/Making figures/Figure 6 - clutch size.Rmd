@@ -82,10 +82,10 @@ clutch_size_plot
 
 
 
-#sem_plot <- clutch_size_plot + sem_predictions
+#sem_plot <- figure 6 - clutch_size_plot + sem_predictions
 
 ggsave(
-  here("figures", "clutch size plot.png"),
+  here("figures", "figure 6 - clutch size plot.png"),
  plot = clutch_size_plot,
   width = 20,
   height = 10,

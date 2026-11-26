@@ -37,6 +37,9 @@ sum(results$clutch_size >= 1 & results$clutch_size <= 9, na.rm = TRUE)
 results <- results %>%
   filter(clutch_size != 0)
 
+median(results$clutch_size)
+IQR(results$clutch_size)
+
 mean(results$clutch_size)
 sd(results$clutch_size)
 

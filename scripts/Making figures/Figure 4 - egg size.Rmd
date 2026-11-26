@@ -77,7 +77,8 @@ mean_egg_size <- ggplot(results,
     axis.text = element_text(size = 30),       # axis tick labels bigger
     legend.text = element_text(size = 30),     # legend text bigger
     legend.title = element_text(size = 30)     # legend title bigger
-  )
+  ) +
+  theme_bw()
 
 mean_egg_size
 
@@ -85,7 +86,7 @@ mean_egg_size
 
 
 ggsave(
-  here("figures", "mean egg size.png"),
+  here("figures", "figure 4 - mean egg size.png"),
   plot = mean_egg_size,
   width = 20,
   height = 10,

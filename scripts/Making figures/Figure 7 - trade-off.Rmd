@@ -93,7 +93,7 @@ trade_off_plot <-  lab_moths_trade_off + wild_moths_trade_off
 
 #save the figure
 ggsave(
-  here("figures", "figure 8 - trade off.png"),
+  here("figures", "figure 7 - trade off.png"),
   plot = trade_off_plot,
   width = 20,
   height = 10,
