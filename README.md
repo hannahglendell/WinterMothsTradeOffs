@@ -6,21 +6,22 @@ editor_options:
 
 # Repository structure
 
-This repository contains all the data and code associated with the paper
-'Developmental temperature shapes reproductive output in the absence of
-a number-quality trade-off in the winter moth'
+This repository contains all the data and code needed to run the
+analyses in the manuscript associated with this repository. It is
+structured as an RStudio Project and uses renv to manage R package
+dependencies.
 
 Note that throughout the code, 'larval treatment' is used to denote
-resource acquisiton temperature, and 'pupal treatment' i used to denote
+resource acquisiton temperature, and 'pupal treatment' is used to denote
 resource allocation treatment. See the paper for methods.
 
-Note that throughout this repository, the analysis is split into
+Note that throughout this project, the analysis is split into
 'experiment 1' and 'experiment 2'. **Experiment 1** refers to the
 experiment investigating how developmental temperature affects clutch
 size, egg size, and their trade-off. **Experiment 2** refers to the
 experiment investigating the fitness effects of egg size.
 
-This repository has four folders - data, figures, renv and scripts
+This repository has three folders - data, figures, and scripts
 
 -   data - contains the raw data and clean data. Data cleaning performed
     in cleaning.Rmd found in scripts folder. Also contains some saved
@@ -29,20 +30,17 @@ This repository has four folders - data, figures, renv and scripts
 
 -   figures - figures saved as .png
 
--   renv - R package versions used in this repository
-
 -   scripts - scripts for all analyses and for creating figures. First
     run the cleaning.Rmd to clean all the data. Then there are two
     folders
 
     -   Analysis
 
-        -   Appendix - contains code for calculating the life cycle
-            dates of wild winter moths, and code for calculating the
-            mean temperature in each treatment during 'resource
-            acquisition' and 'resource allocation' periods. Contains
-            hurdle models used to make sure that removing zero values
-            from the PSEM was justified.
+        -   Appendix - contains code for calculating the mean
+            temperature in each treatment during 'resource acquisition'
+            and 'resource allocation' periods. Contains hurdle models
+            used to make sure that removing zero values from the PSEM
+            was justified.
 
         -   Experiment 1 - all code for experiment 1, including analysis
             on clutch size, egg size, their trade-off, and the SEM
@@ -54,6 +52,21 @@ This repository has four folders - data, figures, renv and scripts
 
     -   Making figures - code for making the figures saved in 'figures'
         folder
+
+# Running the code
+
+1.  You will need R version 4.5.2 (2025-10-31 ucrt) and RStudio
+
+2.  Download and unzip the project archive to a local folder
+
+3.  Open the results.Rproj file in Rstudio
+
+4.  In the R console run install.packages("renv"). Then run
+    renv::restore().
+
+5.  Follow the prompt to install the required packages from renv.lock
+
+6.  The cleaning file should be run first.
 
 # Raw data files
 
